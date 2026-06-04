@@ -187,11 +187,8 @@ body { background: var(--bg); color: var(--text); -webkit-font-smoothing: antial
 .fatura-total-row td { font-weight: 800; font-size: 0.88rem; padding: 12px; border-top: 2px solid var(--border2) !important; }
 .fatura-gd-card .fatura-total-row td { color: var(--accent); border-top-color: var(--accent-dark) !important; }
 
-.faturas-seta { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding-top: 52px; }
-.seta-economia { display: flex; flex-direction: column; align-items: center; gap: 4px; background: var(--accent-dim); border: 1px solid var(--accent-dark); border-radius: var(--radius); padding: 12px 8px; color: var(--accent); text-align: center; width: 84px; }
-.seta-pct { font-size: 1.3rem; font-weight: 800; line-height: 1; }
-.seta-rs  { font-family: var(--font-mono); font-size: 0.6rem; color: var(--text-muted); }
-.seta-arrow { color: var(--accent); opacity: 0.3; }
+.faturas-seta { display: flex; flex-direction: column; align-items: center; justify-content: center; padding-top: 52px; }
+.seta-arrow { color: var(--accent); opacity: 0.4; }
 
 /* ── ECONOMIA DESTAQUE ─────────────────────────────────────────────────── */
 .economia-destaque { background: var(--card2); border: 1px solid var(--accent-dark); border-radius: var(--radius); padding: 16px 20px; display: flex; align-items: center; gap: 20px; box-shadow: var(--shadow); }
@@ -263,3 +260,31 @@ body { background: var(--bg); color: var(--text); -webkit-font-smoothing: antial
 ::-webkit-scrollbar { width: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+/* ── CONFIG PAGE ───────────────────────────────────────────────────────── */
+.cfg-section { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; margin-bottom: 0; box-shadow: var(--shadow); }
+.cfg-presets { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+.cfg-preset-btn { display: flex; align-items: center; gap: 8px; padding: 9px 16px; background: var(--card2); border: 1px solid var(--border2); border-radius: var(--radius-sm); cursor: pointer; color: var(--text); font-size: 0.78rem; font-weight: 600; transition: all 0.15s; }
+.cfg-preset-btn:hover { border-color: var(--p-accent); color: var(--p-accent); }
+.cfg-preset-dot { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; }
+
+.cfg-pickers { display: grid; grid-template-columns: repeat(3,1fr); gap: 20px; margin-top: 14px; }
+.cfg-swatch-group { display: flex; flex-direction: column; gap: 8px; }
+.cfg-label { font-size: 0.68rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; }
+.cfg-swatch-row { display: flex; align-items: center; gap: 10px; }
+.cfg-color-preview { width: 36px; height: 36px; border-radius: var(--radius-sm); border: 1px solid var(--border2); flex-shrink: 0; }
+.cfg-color-picker { width: 44px; height: 36px; border: 1px solid var(--border2); border-radius: var(--radius-sm); padding: 2px; cursor: pointer; background: var(--card2); }
+.cfg-hex-input { flex: 1; background: var(--card2); border: 1px solid var(--border2); border-radius: var(--radius-sm); color: var(--accent); font-family: var(--font-mono); font-size: 0.82rem; font-weight: 600; padding: 8px 10px; outline: none; }
+.cfg-hex-input:focus { border-color: var(--accent); }
+.cfg-rgb-val { font-family: var(--font-mono); font-size: 0.62rem; color: var(--text-muted); }
+
+.cfg-preview-box { display: flex; align-items: center; gap: 20px; padding: 20px; background: var(--card2); border-radius: var(--radius-sm); margin-top: 14px; flex-wrap: wrap; }
+.cfg-prev-bar { width: 4px; height: 60px; border-radius: 2px; }
+.cfg-prev-card { display: flex; flex-direction: column; gap: 4px; }
+.cfg-prev-badge { font-size: 0.65rem; font-weight: 700; padding: 3px 8px; border-radius: 4px; display: inline-block; width: fit-content; }
+.cfg-prev-value { font-size: 1.4rem; font-weight: 800; }
+.cfg-prev-label { font-size: 0.68rem; color: var(--text-muted); }
+.cfg-prev-border-sample { padding: 10px 16px; border-radius: var(--radius-sm); }
+.cfg-prev-button { padding: 9px 20px; border: none; border-radius: var(--radius-sm); font-size: 0.78rem; font-weight: 700; cursor: pointer; }
+
+.cfg-actions { display: flex; justify-content: flex-end; gap: 10px; }

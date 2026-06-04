@@ -4,9 +4,11 @@ import { calcular } from "./data/calcular";
 import {
   Zap, ChevronDown, TrendingDown, TrendingUp, BarChart3,
   Building2, Gauge, DollarSign, Leaf, Info, User,
-  FileText, Factory, ArrowRight, Sun, Moon, Edit3, RefreshCw
+  FileText, Factory, ArrowRight, Sun, Moon, Edit3, RefreshCw, Settings
 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, Legend } from "recharts";
+import ConfigPage, { applyColors } from "./ConfigPage";
+import LOGO_MRE from "./logo.js";
 import "./App.css";
 
 const fmt  = (v) => (v ?? 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -124,11 +126,9 @@ export default function App() {
   const [theme, setTheme]         = useState("dark");
   const [activeTab, setActiveTab] = useState("proposta");
   const [editTarifas, setEditTarifas] = useState(false);
+  const [colors, setColors]       = useState({ accent: "#2ecc71", border: "#1a5c35", button: "#27ae60" });
 
-  // apply theme to html
-  useEffect(() => {
-    document.documentElement.setAttribute("data-theme", theme);
-  }, [theme]);
+  useEffect(() => { document.documentElement.setAttribute("data-theme", theme); }, [theme]);
 
   // Cliente
   const [nomeCliente, setNomeCliente] = useState("");
@@ -209,8 +209,8 @@ export default function App() {
     { label:"TE Fora Ponta",        tarifa: fmtN(tar.te_fp,6),         volume: `${fmtK(Math.max(consumoFP-disp_kwh,0))} kWh`, valor: r.fa.te_fp },
     { label:"TUSD Cons. Ponta",     tarifa: fmtN(tar.tusd_cons_p,6),   volume: `${fmtK(consumoP)} kWh`,  valor: r.fa.tusd_p },
     { label:"TUSD Cons. FP",        tarifa: fmtN(tar.tusd_cons_fp,6),  volume: `${fmtK(Math.max(consumoFP-disp_kwh,0))} kWh`, valor: r.fa.tusd_fp },
-    { label:"Demanda Ponta",        tarifa: fmtN(tar.tusd_dem_p,2),    volume: `${demP} kW`,             valor: r.fa.dem_p },
-    { label:"Demanda FP",           tarifa: fmtN(tar.tusd_dem_fp,2),   volume: `${demFP} kW`,            valor: r.fa.dem_fp },
+    { label:"Demanda Ponta",        tarifa: fmtN(tar.tusd_dem_p * mult,2),  volume: `${demP} kW`,  valor: r.fa.dem_p },
+    { label:"Demanda FP",           tarifa: fmtN(tar.tusd_dem_fp * mult,2), volume: `${demFP} kW`, valor: r.fa.dem_fp },
     { label:"Taxa Disponibilidade", tarifa: fmtN((tar.tusd_cons_fp+tar.te_fp)*mult,6), volume: `${disp_kwh} kWh`, valor: r.fa.disp },
     { label:"Bandeira",             tarifa: fmtN(bandeira,4),          volume: `${fmtK(consumoP+consumoFP)} kWh`, valor: r.fa.bandeira },
     { label:"TIP",                  tarifa: "—",                       volume: "—",                      valor: r.fa.tip },
@@ -223,8 +223,8 @@ export default function App() {
     { label:"TE Fora Ponta",        tarifa: fmtN(tar.te_fp*ratio,6),        volume: `${fmtK(Math.max(consumoFP-disp_kwh,0))} kWh`, valor: r.fg.te_fp },
     { label:"TUSD Cons. Ponta",     tarifa: fmtN(tar.tusd_cons_p*ratio,6),  volume: `${fmtK(consumoP)} kWh`,  valor: r.fg.tusd_p },
     { label:"TUSD Cons. FP",        tarifa: fmtN(tar.tusd_cons_fp*ratio,6), volume: `${fmtK(Math.max(consumoFP-disp_kwh,0))} kWh`, valor: r.fg.tusd_fp },
-    { label:"Demanda Ponta",        tarifa: fmtN(tar.tusd_dem_p,2),         volume: `${demP} kW`,             valor: r.fg.dem_p },
-    { label:"Demanda FP",           tarifa: fmtN(tar.tusd_dem_fp,2),        volume: `${demFP} kW`,            valor: r.fg.dem_fp },
+    { label:"Demanda Ponta",        tarifa: fmtN(tar.tusd_dem_p * mult,2),  volume: `${demP} kW`,  valor: r.fg.dem_p },
+    { label:"Demanda FP",           tarifa: fmtN(tar.tusd_dem_fp * mult,2), volume: `${demFP} kW`, valor: r.fg.dem_fp },
     { label:"Taxa Disponibilidade", tarifa: fmtN((tar.tusd_cons_fp+tar.te_fp)*mult,6), volume:`${disp_kwh} kWh`, valor: r.fg.disp },
     { label:"Bandeira",             tarifa: fmtN(bandeira,4),               volume: `${fmtK(consumoP+consumoFP)} kWh`, valor: r.fg.bandeira },
     { label:"TIP",                  tarifa: "—",                            volume: "—",                      valor: r.fg.tip },
@@ -415,12 +415,7 @@ export default function App() {
         <FaturaDetalhada title="Fatura Atual" colorClass="fatura-atual-card"
           rows={rowsAtual} total={r.fa.total} badge="Sem GD" badgeClass="badge-neutro"/>
         <div className="faturas-seta">
-          <div className="seta-economia">
-            <TrendingDown size={18}/>
-            <span className="seta-pct">{fmtP(r.pct_economia)}</span>
-            <span className="seta-rs">{fmt(r.economia_total)}/mês</span>
-          </div>
-          <ArrowRight size={24} className="seta-arrow"/>
+          <ArrowRight size={28} className="seta-arrow"/>
         </div>
         <FaturaDetalhada title="Fatura com GD" colorClass="fatura-gd-card"
           rows={rowsGD} total={r.fg.total} badge={`${desconto}% desconto`} badgeClass="badge-green"/>
@@ -574,7 +569,7 @@ export default function App() {
     <div className="app">
       <header className="header">
         <div className="header-inner">
-          <img src="/logo_mre.png" alt="MRE" className="header-logo"/>
+          <img src={`data:image/png;base64,${LOGO_MRE}`} alt="MRE" className="header-logo"/>
           <div className="header-divider"/>
           <div className="header-tabs">
             <button className={`tab-btn ${activeTab==="proposta"?"tab-active":""}`} onClick={() => setActiveTab("proposta")}>
@@ -582,6 +577,9 @@ export default function App() {
             </button>
             <button className={`tab-btn ${activeTab==="usina"?"tab-active":""}`} onClick={() => setActiveTab("usina")}>
               <Factory size={13}/> Faturamento da Usina
+            </button>
+            <button className={`tab-btn ${activeTab==="config"?"tab-active":""}`} onClick={() => setActiveTab("config")}>
+              <Settings size={13}/> Configurações
             </button>
           </div>
           <div className="header-badges">
@@ -595,9 +593,11 @@ export default function App() {
         </div>
       </header>
       <div className="layout">
-        {sidebar}
+        {activeTab !== "config" && sidebar}
         <main className="main">
-          {activeTab==="proposta" ? tabProposta : tabUsina}
+          {activeTab==="proposta" ? tabProposta : activeTab==="usina" ? tabUsina : (
+            <ConfigPage colors={colors} onChange={(c) => { setColors(c); applyColors(c); }}/>
+          )}
         </main>
       </div>
     </div>
