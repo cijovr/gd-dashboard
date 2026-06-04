@@ -438,23 +438,7 @@ export default function App() {
         </div>
       </div>
 
-      <div className="charts-row">
-        <Section title="Composição Tributária">
-          <ResponsiveContainer width="100%" height={190}>
-            <PieChart>
-              <Pie data={pieTributos} cx="50%" cy="50%" innerRadius={48} outerRadius={82} paddingAngle={2} dataKey="value">
-                {pieTributos.map((e,i) => <Cell key={i} fill={e.fill}/>)}
-              </Pie>
-              <Tooltip formatter={v=>fmt(v)} contentStyle={{background:"var(--card)",border:"1px solid var(--border)",borderRadius:8,fontSize:11,fontFamily:"Montserrat"}}/>
-              <Legend iconType="circle" iconSize={8} formatter={v=><span style={{fontSize:11,color:"var(--text-muted)"}}>{v}</span>}/>
-            </PieChart>
-          </ResponsiveContainer>
-          <div className="tributos-info">
-            <span>Multiplicador: <strong>{fmtN(r.mult,6)}</strong></span>
-            <span>PIS/COFINS base s/ ICMS · ICMS por dentro</span>
-          </div>
-        </Section>
-
+      <div className="charts-row" style={{gridTemplateColumns:"1fr"}}>
         <Section title="Geração Necessária">
           <div className="geracao-grid">
             <div className="geracao-card">

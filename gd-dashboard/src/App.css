@@ -69,7 +69,7 @@ body { background: var(--bg); color: var(--text); -webkit-font-smoothing: antial
 /* ── HEADER ────────────────────────────────────────────────────────────── */
 .header { height: 62px; background: var(--bg2); border-bottom: 1px solid var(--border); display: flex; align-items: center; position: sticky; top: 0; z-index: 100; box-shadow: var(--shadow); }
 .header-inner { width: 100%; padding: 0 20px; display: flex; align-items: center; gap: 14px; }
-.header-logo { height: 34px; width: auto; object-fit: contain; }
+.header-logo { height: 48px; width: auto; object-fit: contain; }
 .header-divider { width: 1px; height: 26px; background: var(--border2); }
 .header-tabs { display: flex; gap: 4px; }
 .tab-btn { display: flex; align-items: center; gap: 6px; padding: 7px 14px; font-size: 0.72rem; font-weight: 600; letter-spacing: 0.02em; background: transparent; border: 1px solid var(--border2); border-radius: var(--radius-sm); color: var(--text-muted); cursor: pointer; transition: all 0.15s; }
