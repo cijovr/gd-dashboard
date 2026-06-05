@@ -248,10 +248,9 @@ export default function App() {
     { name:"Receita B3",    value: r.usina.receita_b3_mensal,        fill:"#f59e0b" },
   ];
 
-  // ── SIDEBAR ─────────────────────────────────────────────────────────────────
-  const sidebar = (
-    <aside className="sidebar">
-      <div className="sidebar-scroll">
+  // ── SIDEBAR CONTENT ──────────────────────────────────────────────────────────
+  const sidebarContent = (
+    <div className="sidebar-scroll">
         <div className="sb-section-title"><User size={11}/> Dados do Cliente</div>
         <TextInput label="Nome" value={nomeCliente} onChange={setNomeCliente} placeholder="Nome completo"/>
         <div className="row-2">
@@ -259,9 +258,7 @@ export default function App() {
           <TextInput label="Telefone" value={telCliente} onChange={setTelCliente} placeholder="(81) 99999-9999"/>
         </div>
         <TextInput label="Endereço" value={endCliente} onChange={setEndCliente} placeholder="Rua, número, cidade"/>
-
         <div className="divider"/>
-
         <div className="sb-section-title"><Building2 size={11}/> Concessionária</div>
         <div className="select-wrap">
           <select value={concId} onChange={e => setConcId(e.target.value)} className="select">
@@ -283,9 +280,7 @@ export default function App() {
             </div>
           </div>
         </div>
-
         <div className="divider"/>
-
         <div className="sb-section-title"><Gauge size={11}/> Consumo & Demanda</div>
         <NumInput label="Consumo Ponta (kWh)" value={consumoP} onChange={setConsumoP} unit=" kWh"/>
         <NumInput label="Consumo Fora Ponta (kWh)" value={consumoFP} onChange={setConsumoFP} unit=" kWh"/>
@@ -302,9 +297,7 @@ export default function App() {
           <NumInput label="Demanda FP (kW)" value={demFP} onChange={setDemFP} unit=" kW"/>
           <NumInput label="Demanda Ponta (kW)" value={demP} onChange={setDemP} unit=" kW"/>
         </div>
-
         <div className="divider"/>
-
         <div className="sb-section-title"><Gauge size={11}/> Tributos</div>
         <div className="row-2">
           <NumInput label="ICMS (%)" value={icms} onChange={setIcms} fmtFn={v=>`${v.toFixed(1)}%`}/>
@@ -315,16 +308,13 @@ export default function App() {
           <NumInput label="Bandeira (R$/kWh)" value={bandeira} onChange={setBandeira} fmtFn={v=>`R$ ${v.toFixed(4)}`}/>
         </div>
         <NumInput label="TIP — Taxa Ilum. Pública (R$)" value={tip} onChange={setTip} fmtFn={v=>`R$ ${fmtK(v)}`}/>
-
         <div className="divider"/>
-
         <div className="desconto-box">
           <div className="sb-section-title" style={{marginBottom:6}}><Leaf size={11}/> Desconto GD</div>
           <NumInput label="Desconto ao cliente (%)" value={desconto} onChange={setDesconto} fmtFn={v=>`${v}%`}/>
           <div className="desconto-info">Tarifa final: <strong>{fmtN(r.tar_desconto_c_trib,6)} R$/kWh</strong></div>
         </div>
-      </div>
-    </aside>
+    </div>
   );
 
   // ── Bloco editar tarifas ──────────────────────────────────────────────────────
@@ -585,7 +575,7 @@ export default function App() {
 
       <div className="layout">
         <aside className={`sidebar ${sidebarOpen ? "open" : ""}`}>
-          {sidebar}
+          {sidebarContent}
         </aside>
         <main className="main">
           {activeTab==="proposta" ? tabProposta : activeTab==="usina" ? tabUsina : (
