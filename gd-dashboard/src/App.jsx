@@ -126,9 +126,13 @@ export default function App() {
   const [theme, setTheme]         = useState("dark");
   const [activeTab, setActiveTab] = useState("proposta");
   const [editTarifas, setEditTarifas] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [colors, setColors]       = useState({ accent: "#2ecc71", border: "#1a5c35", button: "#27ae60" });
 
   useEffect(() => { document.documentElement.setAttribute("data-theme", theme); }, [theme]);
+
+  // Fecha sidebar ao trocar de aba no mobile
+  const switchTab = (tab) => { setActiveTab(tab); setSidebarOpen(false); };
 
   // Cliente
   const [nomeCliente, setNomeCliente] = useState("");
@@ -556,34 +560,59 @@ export default function App() {
           <img src={`data:image/png;base64,${LOGO_MRE}`} alt="MRE" className="header-logo"/>
           <div className="header-divider"/>
           <div className="header-tabs">
-            <button className={`tab-btn ${activeTab==="proposta"?"tab-active":""}`} onClick={() => setActiveTab("proposta")}>
-              <FileText size={13}/> Proposta ao Cliente
-            </button>
-            <button className={`tab-btn ${activeTab==="usina"?"tab-active":""}`} onClick={() => setActiveTab("usina")}>
-              <Factory size={13}/> Faturamento da Usina
-            </button>
-            <button className={`tab-btn ${activeTab==="config"?"tab-active":""}`} onClick={() => setActiveTab("config")}>
-              <Settings size={13}/> Configurações
-            </button>
+            <button className={`tab-btn ${activeTab==="proposta"?"tab-active":""}`} onClick={() => switchTab("proposta")}><FileText size={13}/> Proposta ao Cliente</button>
+            <button className={`tab-btn ${activeTab==="usina"?"tab-active":""}`} onClick={() => switchTab("usina")}><Factory size={13}/> Faturamento da Usina</button>
+            <button className={`tab-btn ${activeTab==="config"?"tab-active":""}`} onClick={() => switchTab("config")}><Settings size={13}/> Configurações</button>
           </div>
-          <div className="header-badges">
+          <div className="header-right">
             <span className="badge">ANEEL 2026</span>
             <span className="badge badge-green">Método CELPE</span>
             <div className="theme-toggle">
-              <button className={`theme-btn ${theme==="dark"?"active":""}`} onClick={() => setTheme("dark")} title="Tema escuro"><Moon size={13}/></button>
-              <button className={`theme-btn ${theme==="light"?"active":""}`} onClick={() => setTheme("light")} title="Tema claro"><Sun size={13}/></button>
+              <button className={`theme-btn ${theme==="dark"?"active":""}`} onClick={() => setTheme("dark")} title="Escuro"><Moon size={13}/></button>
+              <button className={`theme-btn ${theme==="light"?"active":""}`} onClick={() => setTheme("light")} title="Claro"><Sun size={13}/></button>
             </div>
           </div>
+          {/* Hamburger — CSS esconde no desktop, mostra só no mobile */}
+          <button className="hamburger" onClick={() => setSidebarOpen(o => !o)} aria-label="Menu">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <line x1="2" y1="4" x2="16" y2="4"/><line x1="2" y1="9" x2="16" y2="9"/><line x1="2" y1="14" x2="16" y2="14"/>
+            </svg>
+          </button>
         </div>
       </header>
+
+      {sidebarOpen && <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)}/>}
+
       <div className="layout">
-        {activeTab !== "config" && sidebar}
+        <aside className={`sidebar ${sidebarOpen ? "open" : ""}`}>
+          {sidebar}
+        </aside>
         <main className="main">
           {activeTab==="proposta" ? tabProposta : activeTab==="usina" ? tabUsina : (
             <ConfigPage colors={colors} onChange={(c) => { setColors(c); applyColors(c); }}/>
           )}
         </main>
       </div>
+
+      <nav className="bottom-nav">
+        <div className="bottom-nav-inner">
+          <button className={`bottom-nav-btn ${activeTab==="proposta"?"active":""}`} onClick={() => switchTab("proposta")}>
+            <span className="bnav-icon"><FileText size={20}/></span>Proposta
+          </button>
+          <button className={`bottom-nav-btn ${activeTab==="usina"?"active":""}`} onClick={() => switchTab("usina")}>
+            <span className="bnav-icon"><Factory size={20}/></span>Usina
+          </button>
+          <button className={`bottom-nav-btn ${sidebarOpen?"active":""}`} onClick={() => setSidebarOpen(o => !o)}>
+            <span className="bnav-icon"><Gauge size={20}/></span>Dados
+          </button>
+          <button className={`bottom-nav-btn ${activeTab==="config"?"active":""}`} onClick={() => switchTab("config")}>
+            <span className="bnav-icon"><Settings size={20}/></span>Config
+          </button>
+          <button className="bottom-nav-btn" onClick={() => setTheme(t => t==="dark"?"light":"dark")}>
+            <span className="bnav-icon">{theme==="dark" ? <Sun size={20}/> : <Moon size={20}/>}</span>Tema
+          </button>
+        </div>
+      </nav>
     </div>
   );
 }
