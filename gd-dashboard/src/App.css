@@ -385,3 +385,85 @@ body { background: var(--bg); color: var(--text); -webkit-font-smoothing: antial
   .tarifas-ref { grid-template-columns: repeat(2,1fr); }
   .cfg-preset-btn { padding: 7px 10px; font-size: 0.7rem; }
 }
+
+/* ══ GAVETAS DE CONFIGURAÇÃO ═══════════════════════════════════ */
+.gaveta { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 12px; }
+.gaveta-aberta { border-color: var(--accent); }
+.gaveta-head { width: 100%; display: flex; align-items: center; gap: 13px; padding: 15px 17px; background: transparent; border: 0; cursor: pointer; text-align: left; color: inherit; }
+.gaveta-head:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.gaveta-icone { width: 32px; height: 32px; flex-shrink: 0; border-radius: 9px; display: grid; place-items: center; background: var(--accent-dim); color: var(--accent); }
+.gaveta-textos { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.gaveta-titulo { font-size: .92rem; font-weight: 600; }
+.gaveta-desc { font-size: .74rem; color: var(--text-muted); }
+.gaveta-chevron { margin-left: auto; flex-shrink: 0; color: var(--text-muted); transition: transform .18s; }
+.gaveta-aberta .gaveta-chevron { transform: rotate(180deg); }
+.gaveta-body { padding: 2px 17px 18px; border-top: 1px solid var(--border); }
+.cfg-inner { display: flex; flex-direction: column; gap: 18px; padding-top: 14px; }
+
+/* ══ EDITOR DE TARIFAS ═════════════════════════════════════════ */
+.tcfg { display: flex; flex-direction: column; gap: 12px; padding-top: 14px; }
+.tcfg-intro { margin: 0; font-size: .78rem; line-height: 1.5; color: var(--text-muted); max-width: 78ch; }
+
+.tcfg-busca { display: flex; align-items: center; gap: 8px; padding: 9px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--card2); color: var(--text-muted); }
+.tcfg-busca input { flex: 1; border: 0; background: transparent; outline: none; font-size: .82rem; color: var(--text); font-family: inherit; }
+
+.tcfg-uf-grupo { display: flex; flex-direction: column; gap: 7px; }
+.tcfg-uf-titulo { font-size: .7rem; font-weight: 700; letter-spacing: .05em; color: var(--text-muted); margin-top: 6px; }
+
+.tcfg-card { border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--card); }
+.tcfg-card-aberto { border-color: var(--accent); }
+.tcfg-card-head { width: 100%; display: flex; align-items: center; gap: 9px; padding: 11px 13px; background: transparent; border: 0; cursor: pointer; color: inherit; text-align: left; }
+.tcfg-card-head:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.tcfg-uf { font-size: .66rem; font-weight: 700; padding: 3px 7px; border-radius: 5px; background: var(--accent-dim); color: var(--accent); flex-shrink: 0; }
+.tcfg-nome { font-weight: 600; font-size: .86rem; }
+.tcfg-chip { font-size: .68rem; padding: 3px 8px; border-radius: 5px; background: var(--card2); color: var(--text-muted); white-space: nowrap; }
+.tcfg-chip-alerta { color: #e05c4b; background: rgba(224,92,75,.12); }
+.tcfg-chip-vazio { color: var(--warn); background: rgba(245,166,35,.12); }
+.tcfg-ponto { width: 7px; height: 7px; border-radius: 50%; background: var(--warn); flex-shrink: 0; }
+.tcfg-chevron { margin-left: auto; flex-shrink: 0; color: var(--text-muted); }
+.tcfg-card-aberto .tcfg-chevron { transform: rotate(180deg); }
+
+.tcfg-card-body { padding: 4px 13px 15px; display: flex; flex-direction: column; gap: 15px; }
+.tcfg-bloco { display: flex; flex-direction: column; gap: 9px; }
+.tcfg-bloco-titulo { display: flex; align-items: center; gap: 7px; font-size: .79rem; font-weight: 600; }
+.tcfg-bola { width: 9px; height: 9px; border-radius: 50%; }
+.tcfg-verde { background: var(--accent); }
+.tcfg-azul { background: #3b82f6; }
+.tcfg-laranja { background: #f59e0b; }
+
+.tcfg-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 9px; }
+.tcfg-campo { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.tcfg-campo-label { font-size: .68rem; color: var(--text-muted); }
+.tcfg-campo-label em { font-style: normal; opacity: .7; }
+.tcfg-campo-input { width: 100%; padding: 9px 11px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--card2); color: var(--text); font-size: .82rem; font-family: inherit; outline: none; }
+.tcfg-campo-input:focus { border-color: var(--accent); }
+.tcfg-campo-data { max-width: 200px; }
+
+.tcfg-bloco-fator { padding: 12px; border-radius: var(--radius-sm); background: var(--card2); border: 1px dashed var(--border2); }
+.tcfg-fator-linha { display: flex; gap: 14px; align-items: flex-end; flex-wrap: wrap; }
+.tcfg-fator-valor { display: flex; flex-direction: column; gap: 2px; }
+.tcfg-fator-valor span { font-size: 1.5rem; font-weight: 700; color: var(--accent); line-height: 1.1; }
+.tcfg-fator-valor em { font-style: normal; font-size: .68rem; color: var(--text-muted); }
+.tcfg-nota { margin-top: 10px; font-size: .71rem; line-height: 1.5; color: var(--text-muted); max-width: 78ch; }
+.tcfg-alerta { display: flex; gap: 7px; align-items: flex-start; margin-top: 9px; padding: 8px 10px; border-radius: var(--radius-sm); background: rgba(245,166,35,.12); color: var(--warn); font-size: .73rem; }
+
+.tcfg-acoes { display: flex; gap: 8px; flex-wrap: wrap; padding-top: 12px; border-top: 1px solid var(--border); }
+.tcfg-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 9px 14px; border-radius: var(--radius-sm); font-size: .76rem; font-weight: 600; font-family: inherit; cursor: pointer; border: 1px solid var(--border2); background: transparent; color: var(--text); }
+.tcfg-btn:disabled { opacity: .45; cursor: default; }
+.tcfg-btn-salvar { margin-left: auto; background: var(--accent); border-color: var(--accent); color: #fff; }
+.tcfg-btn-ghost { color: var(--text-muted); }
+.tcfg-btn-perigo { color: #e05c4b; border-color: rgba(224,92,75,.35); }
+
+.tcfg-vazio { padding: 22px; text-align: center; font-size: .8rem; color: var(--text-muted); }
+.tcfg-nova { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 6px; padding: 13px; border-radius: var(--radius-sm); border: 1px dashed var(--border2); }
+.tcfg-nova input { flex: 1 1 180px; padding: 9px 11px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--card); color: var(--text); font-size: .82rem; font-family: inherit; outline: none; }
+.tcfg-nova-uf { flex: 0 0 72px; text-transform: uppercase; }
+
+.sem-tarifa { padding: 34px 22px; text-align: center; background: var(--card); border: 1px dashed var(--border2); border-radius: var(--radius); }
+.sem-tarifa h2 { margin: 0 0 8px; font-size: 1rem; }
+.sem-tarifa p { margin: 0 auto 16px; max-width: 60ch; font-size: .82rem; line-height: 1.55; color: var(--text-muted); }
+
+@media (max-width: 720px) {
+  .tcfg-btn-salvar { margin-left: 0; width: 100%; }
+  .tcfg-fator-linha { gap: 10px; }
+}

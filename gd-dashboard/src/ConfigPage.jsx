@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { RotateCcw, Check } from "lucide-react";
+import { RotateCcw, Check, ChevronDown, Palette, Zap } from "lucide-react";
+import TarifasPage from "./TarifasPage";
 
 // Presets de cor
 const PRESETS = [
@@ -69,7 +70,42 @@ function ColorSwatch({ label, value, onChange }) {
   );
 }
 
+function Gaveta({ id, titulo, descricao, icone: Icone, aberta, onToggle, children }) {
+  return (
+    <section className={`gaveta ${aberta ? "gaveta-aberta" : ""}`}>
+      <button className="gaveta-head" onClick={onToggle} aria-expanded={aberta} aria-controls={id}>
+        <span className="gaveta-icone"><Icone size={15}/></span>
+        <span className="gaveta-textos">
+          <span className="gaveta-titulo">{titulo}</span>
+          <span className="gaveta-desc">{descricao}</span>
+        </span>
+        <ChevronDown size={17} className="gaveta-chevron"/>
+      </button>
+      {aberta && <div className="gaveta-body" id={id}>{children}</div>}
+    </section>
+  );
+}
+
 export default function ConfigPage({ colors, onChange }) {
+  const [gaveta, setGaveta] = useState("tarifas");
+  const alterna = (id) => setGaveta(g => g === id ? null : id);
+  return (
+    <div className="tab-content">
+      <Gaveta id="gaveta-layout" titulo="Layout do dashboard"
+        descricao="Cores, presets e identidade visual" icone={Palette}
+        aberta={gaveta === "layout"} onToggle={() => alterna("layout")}>
+        <PainelCores colors={colors} onChange={onChange}/>
+      </Gaveta>
+      <Gaveta id="gaveta-tarifas" titulo="Tarifas concessionárias"
+        descricao="Tarifas digitadas que alimentam a proposta e o faturamento" icone={Zap}
+        aberta={gaveta === "tarifas"} onToggle={() => alterna("tarifas")}>
+        <TarifasPage/>
+      </Gaveta>
+    </div>
+  );
+}
+
+function PainelCores({ colors, onChange }) {
   const [saved, setSaved] = useState(false);
 
   const handleApply = () => {
@@ -91,7 +127,7 @@ export default function ConfigPage({ colors, onChange }) {
   };
 
   return (
-    <div className="tab-content">
+    <div className="cfg-inner">
       <div className="cfg-section">
         <div className="section-title">Presets de Cor</div>
         <div className="cfg-presets">

@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
-import { CONCESSIONARIAS, DISPONIBILIDADE } from "./data/tarifas";
+import { DISPONIBILIDADE } from "./data/tarifas";
+import { useConcessionarias, fatorVigente } from "./data/tarifasStore";
 import { calcular } from "./data/calcular";
 import {
   Zap, ChevronDown, TrendingDown, TrendingUp, BarChart3,
@@ -121,6 +122,36 @@ function FaturaDetalhada({ title, colorClass, rows, total, badge, badgeClass }) 
   );
 }
 
+function Header({ theme, setTheme, activeTab, switchTab, setSidebarOpen }) {
+  return (
+      <header className="header">
+      <div className="header-inner">
+        <img src={`data:image/png;base64,${LOGO_MRE}`} alt="MRE" className="header-logo"/>
+        <div className="header-divider"/>
+        <div className="header-tabs">
+          <button className={`tab-btn ${activeTab==="proposta"?"tab-active":""}`} onClick={() => switchTab("proposta")}><FileText size={13}/> Proposta ao Cliente</button>
+          <button className={`tab-btn ${activeTab==="usina"?"tab-active":""}`} onClick={() => switchTab("usina")}><Factory size={13}/> Faturamento da Usina</button>
+          <button className={`tab-btn ${activeTab==="config"?"tab-active":""}`} onClick={() => switchTab("config")}><Settings size={13}/> Configurações</button>
+        </div>
+        <div className="header-right">
+          <span className="badge">ANEEL 2026</span>
+          <span className="badge badge-green">Método CELPE</span>
+          <div className="theme-toggle">
+            <button className={`theme-btn ${theme==="dark"?"active":""}`} onClick={() => setTheme("dark")} title="Escuro"><Moon size={13}/></button>
+            <button className={`theme-btn ${theme==="light"?"active":""}`} onClick={() => setTheme("light")} title="Claro"><Sun size={13}/></button>
+          </div>
+        </div>
+        {/* Hamburger — CSS esconde no desktop, mostra só no mobile */}
+        <button className="hamburger" onClick={() => setSidebarOpen(o => !o)} aria-label="Menu">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+            <line x1="2" y1="4" x2="16" y2="4"/><line x1="2" y1="9" x2="16" y2="9"/><line x1="2" y1="14" x2="16" y2="14"/>
+          </svg>
+        </button>
+      </div>
+    </header>
+  );
+}
+
 // ── MAIN APP ──────────────────────────────────────────────────────────────────
 export default function App() {
   const [theme, setTheme]         = useState("dark");
@@ -156,7 +187,8 @@ export default function App() {
   const [dispTipo,  setDispTipo]  = useState("Trifásica");
   const [desconto,  setDesconto]  = useState(20);
 
-  const conc = useMemo(() => CONCESSIONARIAS.find(c => c.id === concId), [concId]);
+  const CONCESSIONARIAS = useConcessionarias();
+  const conc = useMemo(() => CONCESSIONARIAS.find(c => c.id === concId), [CONCESSIONARIAS, concId]);
 
   // Tarifas base da tabela (calculadas)
   const tarBase = useMemo(() => {
@@ -198,11 +230,39 @@ export default function App() {
       bandeira, tip,
       disponibilidade_kwh: DISPONIBILIDADE[dispTipo],
       desconto_gd: desconto/100,
+      fator_geracao: fatorVigente(conc),
     }, conc);
   }, [conc, grupo, modal, consumoP, consumoFP, demP, demFP, tar,
       icms, pis, cofins, bandeira, tip, dispTipo, desconto]);
 
-  if (!r) return null;
+
+  // Concessionária ainda sem tarifa cadastrada: mostra aviso e leva para Configurações
+  if (!r) return (
+    <div className="app">
+      <Header theme={theme} setTheme={setTheme} activeTab={activeTab} switchTab={switchTab} setSidebarOpen={setSidebarOpen}/>
+      <div className="layout">
+        <main className="main">
+          {activeTab === "config"
+            ? <ConfigPage colors={colors} onChange={(c) => { setColors(c); applyColors(c); }}/>
+            : (
+              <div className="tab-content">
+                <div className="sem-tarifa">
+                  <h2>Tarifas não cadastradas</h2>
+                  <p>
+                    {conc ? conc.nome : "Esta concessionária"} ainda não tem tarifas digitadas.
+                    Abra Configurações, gaveta Tarifas concessionárias, e preencha ao menos a TE
+                    de ponta e de fora ponta do A4.
+                  </p>
+                  <button className="tar-btn tar-btn-edit" onClick={() => switchTab("config")}>
+                    Ir para Configurações
+                  </button>
+                </div>
+              </div>
+            )}
+        </main>
+      </div>
+    </div>
+  );
 
   const mult = r.mult;
   const disp_kwh = DISPONIBILIDADE[dispTipo];
@@ -545,31 +605,7 @@ export default function App() {
 
   return (
     <div className="app">
-      <header className="header">
-        <div className="header-inner">
-          <img src={`data:image/png;base64,${LOGO_MRE}`} alt="MRE" className="header-logo"/>
-          <div className="header-divider"/>
-          <div className="header-tabs">
-            <button className={`tab-btn ${activeTab==="proposta"?"tab-active":""}`} onClick={() => switchTab("proposta")}><FileText size={13}/> Proposta ao Cliente</button>
-            <button className={`tab-btn ${activeTab==="usina"?"tab-active":""}`} onClick={() => switchTab("usina")}><Factory size={13}/> Faturamento da Usina</button>
-            <button className={`tab-btn ${activeTab==="config"?"tab-active":""}`} onClick={() => switchTab("config")}><Settings size={13}/> Configurações</button>
-          </div>
-          <div className="header-right">
-            <span className="badge">ANEEL 2026</span>
-            <span className="badge badge-green">Método CELPE</span>
-            <div className="theme-toggle">
-              <button className={`theme-btn ${theme==="dark"?"active":""}`} onClick={() => setTheme("dark")} title="Escuro"><Moon size={13}/></button>
-              <button className={`theme-btn ${theme==="light"?"active":""}`} onClick={() => setTheme("light")} title="Claro"><Sun size={13}/></button>
-            </div>
-          </div>
-          {/* Hamburger — CSS esconde no desktop, mostra só no mobile */}
-          <button className="hamburger" onClick={() => setSidebarOpen(o => !o)} aria-label="Menu">
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-              <line x1="2" y1="4" x2="16" y2="4"/><line x1="2" y1="9" x2="16" y2="9"/><line x1="2" y1="14" x2="16" y2="14"/>
-            </svg>
-          </button>
-        </div>
-      </header>
+      <Header theme={theme} setTheme={setTheme} activeTab={activeTab} switchTab={switchTab} setSidebarOpen={setSidebarOpen}/>
 
       {sidebarOpen && <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)}/>}
 
