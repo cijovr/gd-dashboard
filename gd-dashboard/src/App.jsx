@@ -4,12 +4,14 @@ import { calcular } from "./data/calcular";
 import {
   Zap, ChevronDown, TrendingDown, TrendingUp, BarChart3,
   Building2, Gauge, DollarSign, Leaf, Info, User,
-  FileText, Factory, ArrowRight, Sun, Moon, Edit3, RefreshCw, Settings
+  FileText, Factory, ArrowRight, Sun, Moon, Edit3, RefreshCw, Settings,
+  Save, FolderOpen, Printer, Trash2, Loader2
 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, Legend } from "recharts";
 import ConfigPage, { applyColors } from "./ConfigPage";
 import LOGO_MRE from "./logo.js";
 import { useMarcaAtiva } from "./data/marcaStore";
+import { usePropostas, propostaStore } from "./data/propostaStore";
 import "./App.css";
 
 const fmt  = (v) => (v ?? 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -131,9 +133,10 @@ function Header({ theme, setTheme, activeTab, switchTab, setSidebarOpen, logo, n
         <div className="header-tabs">
           <button className={`tab-btn ${activeTab==="proposta"?"tab-active":""}`} onClick={() => switchTab("proposta")}><FileText size={13}/> Proposta ao Cliente</button>
           <button className={`tab-btn ${activeTab==="usina"?"tab-active":""}`} onClick={() => switchTab("usina")}><Factory size={13}/> Faturamento da Usina</button>
-          <button className={`tab-btn ${activeTab==="config"?"tab-active":""}`} onClick={() => switchTab("config")}><Settings size={13}/> Configurações</button>
+          <button className={`tab-btn ${activeTab==="propostas"?"tab-active":""}`} onClick={() => switchTab("propostas")}><FolderOpen size={13}/> Propostas Salvas</button>
         </div>
         <div className="header-right">
+          <button className={`tab-btn ${activeTab==="config"?"tab-active":""}`} onClick={() => switchTab("config")}><Settings size={13}/> Configurações</button>
           <span className="badge">ANEEL 2026</span>
           <span className="badge badge-green">Método CELPE</span>
           <div className="theme-toggle">
@@ -152,12 +155,58 @@ function Header({ theme, setTheme, activeTab, switchTab, setSidebarOpen, logo, n
   );
 }
 
+
+// ── LISTA DE PROPOSTAS SALVAS ────────────────────────────────────────────────
+function PropostasSalvas({ onAbrir, onPDF }) {
+  const { itens, carregando, erro } = usePropostas();
+  const dt = (iso) => new Date(iso).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
+
+  if (carregando) return <div className="tab-content"><div className="prop-vazio"><Loader2 size={16} className="girando"/> Carregando propostas...</div></div>;
+
+  return (
+    <div className="tab-content">
+      {erro && <div className="marca-erro-banner">{erro}</div>}
+      {!itens.length && (
+        <div className="prop-vazio">
+          Nenhuma proposta salva ainda. Monte a simulação na aba Proposta ao Cliente e clique em Salvar proposta.
+        </div>
+      )}
+      {itens.map((p) => (
+        <div key={p.id} className="prop-item">
+          <div className="prop-info">
+            <div className="prop-cliente">{p.cliente}</div>
+            <div className="prop-meta">
+              <span>{dt(p.criado_em)}</span>
+              {p.concessionaria && <span>{p.concessionaria}</span>}
+              {p.dados?.desconto != null && <span>{p.dados.desconto}% desconto</span>}
+            </div>
+          </div>
+          <div className="prop-economia">
+            <span>economia/mês</span>
+            <strong>{fmt(p.economia)}</strong>
+          </div>
+          <div className="prop-btns">
+            <button className="tar-btn tar-btn-edit" onClick={() => onAbrir(p.dados)}><FolderOpen size={13}/> Abrir</button>
+            <button className="tar-btn" onClick={() => onPDF(p.dados)}><Printer size={13}/> PDF</button>
+            <button className="tar-btn prop-btn-excluir" onClick={() => { if (confirm(`Excluir a proposta de ${p.cliente}?`)) propostaStore.remover(p.id); }}>
+              <Trash2 size={13}/>
+            </button>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // ── MAIN APP ──────────────────────────────────────────────────────────────────
 export default function App() {
   const [theme, setTheme]         = useState("dark");
   const [activeTab, setActiveTab] = useState("proposta");
   const [editTarifas, setEditTarifas] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [imprimindo, setImprimindo] = useState(false);
+  const [salvando, setSalvando]     = useState(false);
+  const [avisoSalvar, setAvisoSalvar] = useState("");
   const [colors, setColors]       = useState({ accent: "#2ecc71", border: "#1a5c35", button: "#27ae60" });
 
   const marca = useMarcaAtiva();
@@ -269,6 +318,46 @@ export default function App() {
       </div>
     </div>
   );
+
+
+  // ── Propostas salvas ────────────────────────────────────────────────────────
+  const inputsAtuais = () => ({
+    concId, grupo, modal, consumoP, consumoFP, demP, demFP,
+    icms, pis, cofins, bandeira, tip, desconto,
+    editTarifas, editTar,
+    cliente: { nome: nomeCliente, cpf: cpfCliente, tel: telCliente, end: endCliente },
+  });
+
+  const aplicarInputs = (d) => {
+    if (!d) return;
+    setConcId(d.concId); setGrupo(d.grupo); setModal(d.modal);
+    setConsumoP(d.consumoP); setConsumoFP(d.consumoFP);
+    setDemP(d.demP); setDemFP(d.demFP);
+    setIcms(d.icms); setPis(d.pis); setCofins(d.cofins);
+    setBandeira(d.bandeira); setTip(d.tip); setDesconto(d.desconto);
+    setEditTarifas(Boolean(d.editTarifas));
+    if (d.editTar) setEditTar(d.editTar);
+    setNomeCliente(d.cliente?.nome || ""); setCpfCliente(d.cliente?.cpf || "");
+    setTelCliente(d.cliente?.tel || "");   setEndCliente(d.cliente?.end || "");
+  };
+
+  const salvarProposta = async () => {
+    setSalvando(true); setAvisoSalvar("");
+    const res = await propostaStore.salvar({
+      cliente: nomeCliente,
+      concessionaria: conc?.nome,
+      economia: Math.round((r?.economia_total ?? 0) * 100) / 100,
+      dados: inputsAtuais(),
+    });
+    setSalvando(false);
+    setAvisoSalvar(res?.erro ? `Não salvou: ${res.erro}` : "Proposta salva.");
+    setTimeout(() => setAvisoSalvar(""), 3500);
+  };
+
+  const gerarPDF = () => {
+    setImprimindo(true);
+    setTimeout(() => { window.print(); setImprimindo(false); }, 600);
+  };
 
   const mult = r.mult;
 
@@ -509,6 +598,14 @@ export default function App() {
         </Section>
       </div>
 
+      <div className="proposta-acoes no-print">
+        <button className="tar-btn tar-btn-edit" onClick={salvarProposta} disabled={salvando}>
+          {salvando ? <><Loader2 size={13} className="girando"/> Salvando...</> : <><Save size={13}/> Salvar proposta</>}
+        </button>
+        <button className="tar-btn" onClick={gerarPDF}><Printer size={13}/> Gerar PDF</button>
+        {avisoSalvar && <span className="proposta-aviso">{avisoSalvar}</span>}
+      </div>
+
       <footer className="footer">
         MRE — M. Reinaux Energia · Fonte: ANEEL PCAT 2025/2026 · Método tributos: PIS/COFINS base s/ ICMS, ICMS por dentro · REN 1.000/2021 Art. 655-G §5º
       </footer>
@@ -608,9 +705,16 @@ export default function App() {
           {sidebarContent}
         </aside>
         <main className="main">
-          {activeTab==="proposta" ? tabProposta : activeTab==="usina" ? tabUsina : (
-            <ConfigPage colors={colors} onChange={(c) => { setColors(c); applyColors(c); }}/>
-          )}
+          {imprimindo ? (
+            <div className="print-area">{tabProposta}{tabUsina}</div>
+          ) : activeTab==="proposta" ? tabProposta
+            : activeTab==="usina" ? tabUsina
+            : activeTab==="propostas" ? (
+                <PropostasSalvas
+                  onAbrir={(d) => { aplicarInputs(d); switchTab("proposta"); }}
+                  onPDF={(d) => { aplicarInputs(d); gerarPDF(); }}/>
+              )
+            : <ConfigPage colors={colors} onChange={(c) => { setColors(c); applyColors(c); }}/>}
         </main>
       </div>
 
@@ -621,6 +725,9 @@ export default function App() {
           </button>
           <button className={`bottom-nav-btn ${activeTab==="usina"?"active":""}`} onClick={() => switchTab("usina")}>
             <span className="bnav-icon"><Factory size={20}/></span>Usina
+          </button>
+          <button className={`bottom-nav-btn ${activeTab==="propostas"?"active":""}`} onClick={() => switchTab("propostas")}>
+            <span className="bnav-icon"><FolderOpen size={20}/></span>Salvas
           </button>
           <button className={`bottom-nav-btn ${sidebarOpen?"active":""}`} onClick={() => setSidebarOpen(o => !o)}>
             <span className="bnav-icon"><Gauge size={20}/></span>Dados
