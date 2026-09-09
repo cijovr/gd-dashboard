@@ -557,6 +557,15 @@ body { background: var(--bg); color: var(--text); -webkit-font-smoothing: antial
     overflow: visible !important;
   }
 
+  /* A4 tem ~718px de largura útil, abaixo do breakpoint de 768px.
+     Sem isto o navegador imprime o layout de celular. */
+  .fatura-table-head th.col-tarifa,
+  .fatura-tr td.td-tar { display: table-cell !important; }
+  .comparativo-grid { display: grid !important; grid-template-columns: 1fr auto 1fr !important; align-items: center !important; gap: 10px !important; }
+  .comparativo-vs { writing-mode: horizontal-tb !important; }
+  .tarifas-edit-grid { grid-template-columns: repeat(3, 1fr) !important; }
+  .row-2 { display: grid !important; grid-template-columns: 1fr 1fr !important; }
+
   .print-area { display: block; font-size: 8.5pt; line-height: 1.35; }
   .print-area .tab-content { gap: 9px !important; page-break-after: always; padding: 0 !important; }
   .print-area .tab-content:last-child { page-break-after: auto; }
