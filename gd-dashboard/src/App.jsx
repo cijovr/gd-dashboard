@@ -201,7 +201,7 @@ function PropostasSalvas({ onAbrir, onEditar, onPDF }) {
 
 // ── MAIN APP ──────────────────────────────────────────────────────────────────
 export default function App() {
-  const [theme, setTheme]         = useState("dark");
+  const [theme, setTheme]         = useState(localStorage.getItem("gd-tema") || "light");
   const [activeTab, setActiveTab] = useState("proposta");
   const [editTarifas, setEditTarifas] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -214,7 +214,10 @@ export default function App() {
 
   const marca = useMarcaAtiva();
 
-  useEffect(() => { document.documentElement.setAttribute("data-theme", theme); }, [theme]);
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", theme);
+    localStorage.setItem("gd-tema", theme);
+  }, [theme]);
 
   // Aplica a paleta da empresa ativa ao abrir o dashboard
   useEffect(() => {
