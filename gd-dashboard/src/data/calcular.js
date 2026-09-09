@@ -10,6 +10,7 @@ export function calcular(params, conc) {
     bandeira, tip,
     disponibilidade_kwh,
     desconto_gd,
+    fator_geracao: fator_informado,
   } = params;
 
   const tar_total_p  = tusd_cons_p  + te_p;
@@ -18,9 +19,10 @@ export function calcular(params, conc) {
   // Multiplicador tributos (método CELPE)
   const mult = (1 + pis + cofins) / (1 - icms);
 
-  // Fator de ajuste ponta
-  const fator_ajuste  = te_fp / te_p;
-  const fator_geracao = 1 / fator_ajuste;
+  // Fator de geração ponta / fora ponta — REN 1.000/2021, art. 655-G, §5º.
+  // Vem do cadastro da concessionária; na falta dele, cai na relação entre as TE.
+  const fator_geracao = fator_informado > 0 ? fator_informado : (te_fp > 0 ? te_p / te_fp : 0);
+  const fator_ajuste  = fator_geracao > 0 ? 1 / fator_geracao : 0;
 
   // Taxa de disponibilidade
   const disp_kwh = disponibilidade_kwh;
