@@ -77,6 +77,17 @@ async function gravar(marca) {
 export const marcaStore = {
   salvar: gravar,
 
+  // Sempre parte do estado atual, nunca de uma cópia antiga da tela.
+  async definirCores(id, cores) {
+    const marca = estado.marcas[id];
+    if (marca) await gravar({ ...marca, cores });
+  },
+
+  async renomear(id, nome) {
+    const marca = estado.marcas[id];
+    if (marca) await gravar({ ...marca, nome });
+  },
+
   async criar(nome) {
     const base = nome.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
       .replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "") || "empresa";

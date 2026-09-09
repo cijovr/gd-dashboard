@@ -17,9 +17,10 @@ export default function MarcaPanel({ onCores }) {
   const [novaEmpresa, setNovaEmpresa] = useState("");
   const inputRef = useRef(null);
 
-  const aplicarTema = (cor) => {
+  const aplicarTema = (cor, id = ativa?.id) => {
+    if (!id) return;
     const tema = temaDaCor(cor);
-    marcaStore.salvar({ ...ativa, cores: tema });
+    marcaStore.definirCores(id, tema);
     applyColors(tema);
     onCores?.(tema);
   };
@@ -34,7 +35,7 @@ export default function MarcaPanel({ onCores }) {
       const cores = await extrairPaleta(dataUrl);
       setPaleta(cores);
       await marcaStore.enviarLogo(ativa.id, dataUrl);
-      if (cores.length) aplicarTema(cores[0]);
+      if (cores.length) aplicarTema(cores[0], ativa.id);
       else setAviso("Não identifiquei cores nessa logo. Escolha a cor manualmente abaixo.");
     } catch {
       setAviso("Não foi possível ler essa imagem. Tente PNG ou JPG.");
