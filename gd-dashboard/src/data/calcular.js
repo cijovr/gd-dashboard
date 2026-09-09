@@ -24,8 +24,10 @@ export function calcular(params, conc) {
   const fator_geracao = fator_informado > 0 ? fator_informado : (te_fp > 0 ? te_p / te_fp : 0);
   const fator_ajuste  = fator_geracao > 0 ? 1 / fator_geracao : 0;
 
-  // Taxa de disponibilidade
-  const disp_kwh = disponibilidade_kwh;
+  // Taxa de disponibilidade: só existe no Grupo B.
+  // No Grupo A o faturamento mínimo é a demanda contratada, não um piso de kWh.
+  const grupo_a = grupo === "A4" || grupo === "A3" || grupo === "A3a" || grupo === "A2";
+  const disp_kwh = grupo_a ? 0 : disponibilidade_kwh;
   const cons_fp_efetivo = Math.max(consumo_fp - disp_kwh, 0);
 
   // Tarifa média ponderada (sem tributos)
