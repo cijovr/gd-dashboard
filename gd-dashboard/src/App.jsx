@@ -123,11 +123,11 @@ function FaturaDetalhada({ title, colorClass, rows, total, badge, badgeClass }) 
   );
 }
 
-function Header({ theme, setTheme, activeTab, switchTab, setSidebarOpen, logo, nomeMarca }) {
+function Header({ theme, setTheme, activeTab, switchTab, setSidebarOpen, logo, nomeMarca, alturaLogo }) {
   return (
       <header className="header">
       <div className="header-inner">
-        <img src={logo || `data:image/png;base64,${LOGO_MRE}`} alt={nomeMarca || "MRE"} className="header-logo"/>
+        <img src={logo || `data:image/png;base64,${LOGO_MRE}`} alt={nomeMarca || "MRE"} className="header-logo" style={{ height: `${alturaLogo || 22}px` }}/>
         <div className="header-divider"/>
         <div className="header-tabs">
           <button className={`tab-btn ${activeTab==="proposta"?"tab-active":""}`} onClick={() => switchTab("proposta")}><FileText size={13}/> Proposta ao Cliente</button>
@@ -247,7 +247,7 @@ export default function App() {
   // Concessionária ainda sem tarifa cadastrada: mostra aviso e leva para Configurações
   if (!r) return (
     <div className="app">
-      <Header theme={theme} setTheme={setTheme} activeTab={activeTab} switchTab={switchTab} setSidebarOpen={setSidebarOpen} logo={marca?.logo_url} nomeMarca={marca?.nome}/>
+      <Header theme={theme} setTheme={setTheme} activeTab={activeTab} switchTab={switchTab} setSidebarOpen={setSidebarOpen} logo={marca?.logo_url} nomeMarca={marca?.nome} alturaLogo={marca?.logo_altura}/>
       <div className="layout">
         <main className="main">
           {activeTab === "config"
@@ -613,7 +613,7 @@ export default function App() {
 
   return (
     <div className="app">
-      <Header theme={theme} setTheme={setTheme} activeTab={activeTab} switchTab={switchTab} setSidebarOpen={setSidebarOpen} logo={marca?.logo_url} nomeMarca={marca?.nome}/>
+      <Header theme={theme} setTheme={setTheme} activeTab={activeTab} switchTab={switchTab} setSidebarOpen={setSidebarOpen} logo={marca?.logo_url} nomeMarca={marca?.nome} alturaLogo={marca?.logo_altura}/>
 
       {sidebarOpen && <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)}/>}
 

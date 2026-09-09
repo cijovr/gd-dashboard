@@ -13,6 +13,7 @@ const daLinha = (l) => ({
   id: l.id,
   nome: l.nome,
   logo_url: l.logo_url ?? null,
+  logo_altura: l.logo_altura ?? 22,
   cores: { accent: l.accent, border: l.border, button: l.button },
 });
 
@@ -20,12 +21,13 @@ const paraLinha = (m) => ({
   id: m.id,
   nome: m.nome,
   logo_url: m.logo_url ?? null,
+  logo_altura: m.logo_altura ?? 22,
   accent: m.cores?.accent ?? CORES_PADRAO.accent,
   border: m.cores?.border ?? CORES_PADRAO.border,
   button: m.cores?.button ?? CORES_PADRAO.button,
 });
 
-const PADRAO_MRE = { id: "mre", nome: "MRE", logo_url: null, cores: { ...CORES_PADRAO } };
+const PADRAO_MRE = { id: "mre", nome: "MRE", logo_url: null, logo_altura: 22, cores: { ...CORES_PADRAO } };
 
 let estado = {
   marcas: { mre: PADRAO_MRE },
@@ -83,6 +85,11 @@ export const marcaStore = {
     if (marca) await gravar({ ...marca, cores });
   },
 
+  async definirAltura(id, altura) {
+    const marca = estado.marcas[id];
+    if (marca) await gravar({ ...marca, logo_altura: Math.max(14, Math.min(64, altura)) });
+  },
+
   async renomear(id, nome) {
     const marca = estado.marcas[id];
     if (marca) await gravar({ ...marca, nome });
@@ -93,7 +100,7 @@ export const marcaStore = {
       .replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "") || "empresa";
     let id = base, i = 2;
     while (estado.marcas[id]) id = `${base}_${i++}`;
-    const marca = { id, nome: nome.trim(), logo_url: null, cores: { ...CORES_PADRAO } };
+    const marca = { id, nome: nome.trim(), logo_url: null, logo_altura: 22, cores: { ...CORES_PADRAO } };
     await gravar(marca);
     marcaStore.ativar(id);
     return id;

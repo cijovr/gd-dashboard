@@ -72,7 +72,7 @@ body { background: var(--bg); color: var(--text); -webkit-font-smoothing: antial
   box-shadow: var(--shadow);
 }
 .header-inner { width: 100%; padding: 0 16px; display: flex; align-items: center; gap: 12px; }
-.header-logo { height: 40px; width: auto; object-fit: contain; flex-shrink: 0; }
+.header-logo { height: 22px; width: auto; object-fit: contain; flex-shrink: 0; }
 .header-divider { width: 1px; height: 26px; background: var(--border2); flex-shrink: 0; }
 
 /* Desktop tabs (hidden on mobile) */
@@ -508,3 +508,7 @@ body { background: var(--bg); color: var(--text); -webkit-font-smoothing: antial
 @keyframes girar { to { transform: rotate(360deg); } }
 .marca-erro-banner { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-radius: var(--radius-sm); background: rgba(224,92,75,.1); color: #e05c4b; font-size: .76rem; }
 @media (prefers-reduced-motion: reduce) { .girando { animation: none; } }
+
+.marca-tamanho { display: flex; align-items: center; gap: 10px; font-size: .74rem; color: var(--text-muted); flex-wrap: wrap; }
+.marca-tamanho input[type="range"] { flex: 1 1 160px; max-width: 240px; accent-color: var(--accent); }
+.marca-tamanho span { font-variant-numeric: tabular-nums; min-width: 44px; }

@@ -122,6 +122,15 @@ export default function MarcaPanel({ onCores }) {
                 </button>
               )}
             </div>
+            {ativa?.logo_url && (
+              <div className="marca-tamanho">
+                <label htmlFor="alt-logo">Altura no cabeçalho</label>
+                <input id="alt-logo" type="range" min="14" max="64" step="1"
+                  value={ativa.logo_altura ?? 22}
+                  onChange={(e) => marcaStore.definirAltura(ativa.id, Number(e.target.value))}/>
+                <span>{ativa.logo_altura ?? 22} px</span>
+              </div>
+            )}
             {aviso && <div className="marca-erro">{aviso}</div>}
           </div>
           <input ref={inputRef} type="file" accept="image/*" style={{ display: "none" }}
