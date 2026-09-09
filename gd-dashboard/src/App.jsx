@@ -10,6 +10,7 @@ import {
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, Legend } from "recharts";
 import ConfigPage, { applyColors } from "./ConfigPage";
 import LOGO_MRE from "./logo.js";
+import { useMarcaAtiva } from "./data/marcaStore";
 import "./App.css";
 
 const fmt  = (v) => (v ?? 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -122,11 +123,11 @@ function FaturaDetalhada({ title, colorClass, rows, total, badge, badgeClass }) 
   );
 }
 
-function Header({ theme, setTheme, activeTab, switchTab, setSidebarOpen }) {
+function Header({ theme, setTheme, activeTab, switchTab, setSidebarOpen, logo, nomeMarca }) {
   return (
       <header className="header">
       <div className="header-inner">
-        <img src={`data:image/png;base64,${LOGO_MRE}`} alt="MRE" className="header-logo"/>
+        <img src={logo || `data:image/png;base64,${LOGO_MRE}`} alt={nomeMarca || "MRE"} className="header-logo"/>
         <div className="header-divider"/>
         <div className="header-tabs">
           <button className={`tab-btn ${activeTab==="proposta"?"tab-active":""}`} onClick={() => switchTab("proposta")}><FileText size={13}/> Proposta ao Cliente</button>
@@ -160,7 +161,14 @@ export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [colors, setColors]       = useState({ accent: "#2ecc71", border: "#1a5c35", button: "#27ae60" });
 
+  const marca = useMarcaAtiva();
+
   useEffect(() => { document.documentElement.setAttribute("data-theme", theme); }, [theme]);
+
+  // Aplica a paleta da empresa ativa ao abrir o dashboard
+  useEffect(() => {
+    if (marca?.cores) { setColors(marca.cores); applyColors(marca.cores); }
+  }, [marca?.id]);
 
   // Fecha sidebar ao trocar de aba no mobile
   const switchTab = (tab) => { setActiveTab(tab); setSidebarOpen(false); };
@@ -239,7 +247,7 @@ export default function App() {
   // Concessionária ainda sem tarifa cadastrada: mostra aviso e leva para Configurações
   if (!r) return (
     <div className="app">
-      <Header theme={theme} setTheme={setTheme} activeTab={activeTab} switchTab={switchTab} setSidebarOpen={setSidebarOpen}/>
+      <Header theme={theme} setTheme={setTheme} activeTab={activeTab} switchTab={switchTab} setSidebarOpen={setSidebarOpen} logo={marca?.logo_url} nomeMarca={marca?.nome}/>
       <div className="layout">
         <main className="main">
           {activeTab === "config"
@@ -605,7 +613,7 @@ export default function App() {
 
   return (
     <div className="app">
-      <Header theme={theme} setTheme={setTheme} activeTab={activeTab} switchTab={switchTab} setSidebarOpen={setSidebarOpen}/>
+      <Header theme={theme} setTheme={setTheme} activeTab={activeTab} switchTab={switchTab} setSidebarOpen={setSidebarOpen} logo={marca?.logo_url} nomeMarca={marca?.nome}/>
 
       {sidebarOpen && <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)}/>}
 

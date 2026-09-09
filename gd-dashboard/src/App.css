@@ -467,3 +467,44 @@ body { background: var(--bg); color: var(--text); -webkit-font-smoothing: antial
   .tcfg-btn-salvar { margin-left: 0; width: 100%; }
   .tcfg-fator-linha { gap: 10px; }
 }
+
+/* ══ MARCA / LOGO ══════════════════════════════════════════════ */
+.marca { display: flex; flex-direction: column; gap: 18px; }
+
+.marca-lista { display: flex; flex-wrap: wrap; gap: 8px; }
+.marca-chip { display: inline-flex; align-items: center; gap: 8px; padding: 7px 13px; border-radius: 999px; border: 1px solid var(--border2); background: transparent; color: var(--text); font-size: .78rem; font-weight: 600; font-family: inherit; cursor: pointer; }
+.marca-chip-ativa { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
+.marca-chip-logo { width: 20px; height: 20px; object-fit: contain; border-radius: 4px; }
+.marca-chip-icone { display: grid; place-items: center; color: var(--text-muted); }
+
+.marca-nova { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 11px; }
+.marca-nova input { flex: 1 1 200px; padding: 9px 11px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--card2); color: var(--text); font-size: .82rem; font-family: inherit; outline: none; }
+.marca-nova input:focus { border-color: var(--accent); }
+.marca-btn-remover { color: #e05c4b; border-color: rgba(224,92,75,.35); }
+
+.marca-upload { display: flex; gap: 18px; align-items: center; flex-wrap: wrap; padding: 16px; border: 1px dashed var(--border2); border-radius: var(--radius); }
+.marca-preview { width: 132px; height: 78px; flex-shrink: 0; display: grid; place-items: center; border-radius: var(--radius-sm); background: var(--card2); border: 1px solid var(--border); overflow: hidden; }
+.marca-preview img { max-width: 88%; max-height: 78%; object-fit: contain; }
+.marca-preview-vazio { font-size: .72rem; color: var(--text-muted); }
+.marca-upload-txt { flex: 1 1 240px; display: flex; flex-direction: column; gap: 11px; }
+.marca-upload-txt p { margin: 0; font-size: .78rem; line-height: 1.5; color: var(--text-muted); max-width: 62ch; }
+.marca-upload-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+.marca-erro { font-size: .75rem; color: var(--warn); }
+
+.marca-paleta { display: flex; gap: 9px; flex-wrap: wrap; align-items: center; }
+.marca-swatch { display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 7px; border-radius: var(--radius-sm); border: 1px solid var(--border2); background: transparent; cursor: pointer; }
+.marca-swatch-ativo { border-color: var(--accent); background: var(--accent-dim); }
+.marca-swatch-cor { width: 46px; height: 34px; border-radius: 5px; border: 1px solid rgba(0,0,0,.18); display: block; }
+.marca-swatch-hex { font-size: .66rem; color: var(--text-muted); letter-spacing: .02em; }
+.marca-reextrair { align-self: center; }
+.marca-dica { margin: 11px 0 0; font-size: .74rem; line-height: 1.5; color: var(--text-muted); max-width: 72ch; }
+
+@media (max-width: 720px) {
+  .marca-preview { width: 100%; height: 92px; }
+}
+
+.marca-carregando { display: flex; align-items: center; gap: 9px; padding: 22px 4px; font-size: .82rem; color: var(--text-muted); }
+.girando { animation: girar 1s linear infinite; }
+@keyframes girar { to { transform: rotate(360deg); } }
+.marca-erro-banner { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-radius: var(--radius-sm); background: rgba(224,92,75,.1); color: #e05c4b; font-size: .76rem; }
+@media (prefers-reduced-motion: reduce) { .girando { animation: none; } }

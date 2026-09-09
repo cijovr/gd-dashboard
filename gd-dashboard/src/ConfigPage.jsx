@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { RotateCcw, Check, ChevronDown, Palette, Zap } from "lucide-react";
 import TarifasPage from "./TarifasPage";
+import MarcaPanel from "./MarcaPanel";
 
 // Presets de cor
 const PRESETS = [
@@ -94,6 +95,7 @@ export default function ConfigPage({ colors, onChange }) {
       <Gaveta id="gaveta-layout" titulo="Layout do dashboard"
         descricao="Cores, presets e identidade visual" icone={Palette}
         aberta={gaveta === "layout"} onToggle={() => alterna("layout")}>
+        <MarcaPanel onCores={onChange}/>
         <PainelCores colors={colors} onChange={onChange}/>
       </Gaveta>
       <Gaveta id="gaveta-tarifas" titulo="Tarifas concessionárias"
