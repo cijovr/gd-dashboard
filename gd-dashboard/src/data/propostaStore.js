@@ -46,6 +46,19 @@ export const propostaStore = {
     return { ok: true };
   },
 
+  async atualizar(id, { cliente, concessionaria, economia, dados }) {
+    if (!supabaseAtivo) return { erro: "Supabase não configurado." };
+    const { data, error } = await supabase
+      .from("propostas")
+      .update({ cliente: cliente || "Sem nome", concessionaria, economia, dados })
+      .eq("id", id).select().single();
+    if (error) { estado.erro = error.message; emitir(); return { erro: error.message }; }
+    estado.itens = estado.itens.map((p) => (p.id === id ? data : p));
+    estado.erro = null;
+    emitir();
+    return { ok: true };
+  },
+
   async remover(id) {
     estado.itens = estado.itens.filter((p) => p.id !== id);
     emitir();

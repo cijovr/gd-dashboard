@@ -539,3 +539,6 @@ body { background: var(--bg); color: var(--text); -webkit-font-smoothing: antial
   .section, .kpi-card, .fatura-card, .prop-item, .usina-bloco { break-inside: avoid; }
 }
 @page { size: A4; margin: 12mm; }
+
+.edicao-tarja { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 10px 14px; border-radius: var(--radius-sm); background: var(--accent-dim); border: 1px solid var(--accent); color: var(--text); font-size: .78rem; }
+.edicao-tarja span { flex: 1 1 240px; }

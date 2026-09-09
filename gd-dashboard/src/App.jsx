@@ -5,7 +5,7 @@ import {
   Zap, ChevronDown, TrendingDown, TrendingUp, BarChart3,
   Building2, Gauge, DollarSign, Leaf, Info, User,
   FileText, Factory, ArrowRight, Sun, Moon, Edit3, RefreshCw, Settings,
-  Save, FolderOpen, Printer, Trash2, Loader2
+  Save, FolderOpen, Printer, Trash2, Loader2, Pencil, X
 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, Legend } from "recharts";
 import ConfigPage, { applyColors } from "./ConfigPage";
@@ -157,7 +157,7 @@ function Header({ theme, setTheme, activeTab, switchTab, setSidebarOpen, logo, n
 
 
 // ── LISTA DE PROPOSTAS SALVAS ────────────────────────────────────────────────
-function PropostasSalvas({ onAbrir, onPDF }) {
+function PropostasSalvas({ onAbrir, onEditar, onPDF }) {
   const { itens, carregando, erro } = usePropostas();
   const dt = (iso) => new Date(iso).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
 
@@ -187,6 +187,7 @@ function PropostasSalvas({ onAbrir, onPDF }) {
           </div>
           <div className="prop-btns">
             <button className="tar-btn tar-btn-edit" onClick={() => onAbrir(p.dados)}><FolderOpen size={13}/> Abrir</button>
+            <button className="tar-btn" title="Editar esta proposta" onClick={() => onEditar(p)}><Pencil size={13}/></button>
             <button className="tar-btn" onClick={() => onPDF(p.dados)}><Printer size={13}/> PDF</button>
             <button className="tar-btn prop-btn-excluir" onClick={() => { if (confirm(`Excluir a proposta de ${p.cliente}?`)) propostaStore.remover(p.id); }}>
               <Trash2 size={13}/>
@@ -207,6 +208,8 @@ export default function App() {
   const [imprimindo, setImprimindo] = useState(false);
   const [salvando, setSalvando]     = useState(false);
   const [avisoSalvar, setAvisoSalvar] = useState("");
+  const [editandoId, setEditandoId] = useState(null);
+  const [editandoNome, setEditandoNome] = useState("");
   const [colors, setColors]       = useState({ accent: "#2ecc71", border: "#1a5c35", button: "#27ae60" });
 
   const marca = useMarcaAtiva();
@@ -341,18 +344,25 @@ export default function App() {
     setTelCliente(d.cliente?.tel || "");   setEndCliente(d.cliente?.end || "");
   };
 
-  const salvarProposta = async () => {
+  const salvarProposta = async (comoNova = false) => {
     setSalvando(true); setAvisoSalvar("");
-    const res = await propostaStore.salvar({
+    const carga = {
       cliente: nomeCliente,
       concessionaria: conc?.nome,
       economia: Math.round((r?.economia_total ?? 0) * 100) / 100,
       dados: inputsAtuais(),
-    });
+    };
+    const editar = editandoId && !comoNova;
+    const res = editar
+      ? await propostaStore.atualizar(editandoId, carga)
+      : await propostaStore.salvar(carga);
+    if (!editar && !res?.erro) { setEditandoId(null); setEditandoNome(""); }
     setSalvando(false);
-    setAvisoSalvar(res?.erro ? `Não salvou: ${res.erro}` : "Proposta salva.");
+    setAvisoSalvar(res?.erro ? `Não salvou: ${res.erro}` : editar ? "Proposta atualizada." : "Proposta salva.");
     setTimeout(() => setAvisoSalvar(""), 3500);
   };
+
+  const sairDaEdicao = () => { setEditandoId(null); setEditandoNome(""); };
 
   const gerarPDF = () => {
     setImprimindo(true);
@@ -538,6 +548,14 @@ export default function App() {
         </div>
       )}
 
+      {editandoId && (
+        <div className="edicao-tarja no-print">
+          <Pencil size={13}/>
+          <span>Editando a proposta salva de <strong>{editandoNome}</strong>. Salvar alterações grava por cima.</span>
+          <button className="tar-btn" onClick={sairDaEdicao}><X size={13}/> Sair da edição</button>
+        </div>
+      )}
+
       {editTarifasBlock}
 
       <div className="kpi-grid">
@@ -599,9 +617,15 @@ export default function App() {
       </div>
 
       <div className="proposta-acoes no-print">
-        <button className="tar-btn tar-btn-edit" onClick={salvarProposta} disabled={salvando}>
-          {salvando ? <><Loader2 size={13} className="girando"/> Salvando...</> : <><Save size={13}/> Salvar proposta</>}
+        <button className="tar-btn tar-btn-edit" onClick={() => salvarProposta(false)} disabled={salvando}>
+          {salvando ? <><Loader2 size={13} className="girando"/> Salvando...</>
+            : editandoId ? <><Save size={13}/> Salvar alterações</> : <><Save size={13}/> Salvar proposta</>}
         </button>
+        {editandoId && (
+          <button className="tar-btn" onClick={() => salvarProposta(true)} disabled={salvando}>
+            <Save size={13}/> Salvar como nova
+          </button>
+        )}
         <button className="tar-btn" onClick={gerarPDF}><Printer size={13}/> Gerar PDF</button>
         {avisoSalvar && <span className="proposta-aviso">{avisoSalvar}</span>}
       </div>
@@ -711,7 +735,8 @@ export default function App() {
             : activeTab==="usina" ? tabUsina
             : activeTab==="propostas" ? (
                 <PropostasSalvas
-                  onAbrir={(d) => { aplicarInputs(d); switchTab("proposta"); }}
+                  onAbrir={(d) => { sairDaEdicao(); aplicarInputs(d); switchTab("proposta"); }}
+                  onEditar={(p) => { aplicarInputs(p.dados); setEditandoId(p.id); setEditandoNome(p.cliente); switchTab("proposta"); }}
                   onPDF={(d) => { aplicarInputs(d); gerarPDF(); }}/>
               )
             : <ConfigPage colors={colors} onChange={(c) => { setColors(c); applyColors(c); }}/>}
