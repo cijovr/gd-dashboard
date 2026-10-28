@@ -239,7 +239,8 @@ export default function App() {
   const [modal,     setModal]     = useState("VERDE");
   const [consumoP,  setConsumoP]  = useState(3800);
   const [consumoFP, setConsumoFP] = useState(23000);
-  const [demP,      setDemP]      = useState(0);
+  const [consumoTotal, setConsumoTotal] = useState(1000);
+  const [demP,    setDemP]      = useState(0);
   const [demFP,     setDemFP]     = useState(90);
   const [icms,      setIcms]      = useState(20.5);
   const [pis,       setPis]       = useState(1.0);
@@ -251,9 +252,22 @@ export default function App() {
   const CONCESSIONARIAS = useConcessionarias();
   const conc = useMemo(() => CONCESSIONARIAS.find(c => c.id === concId), [CONCESSIONARIAS, concId]);
 
+  // Grupo B: modalidade convencional, consumo único, 1 crédito abate 1 kWh (sem fator de ponta)
+  const grupoB = grupo === "B";
+  const escolherGrupo = (g) => {
+    setGrupo(g);
+    if (g === "B") setModal("CONVENCIONAL");
+    else if (modal === "CONVENCIONAL") setModal("VERDE");
+  };
+
   // Tarifas base da tabela (calculadas)
   const tarBase = useMemo(() => {
     if (!conc) return {};
+    if (grupo === "B") return {
+      tusd_cons_p: 0, tusd_cons_fp: conc.b3?.tusd || 0,
+      te_p: 0,        te_fp:        conc.b3?.te   || 0,
+      tusd_dem_p: 0,  tusd_dem_fp: 0,
+    };
     const t = grupo === "A4"
       ? (modal === "AZUL" ? conc.a4.azul : conc.a4.verde)
       : (conc.a3?.azul || conc.a4.azul);
@@ -276,11 +290,13 @@ export default function App() {
   const tar = editTarifas ? editTar : tarBase;
 
   const r = useMemo(() => {
-    if (!conc || !tar.te_p) return null;
+    if (!conc || !(grupoB ? tar.te_fp : tar.te_p)) return null;
     return calcular({
       grupo, modalidade: modal,
-      consumo_p: consumoP, consumo_fp: consumoFP,
-      dem_p: demP, dem_fp: demFP,
+      consumo_p:  grupoB ? 0 : consumoP,
+      consumo_fp: grupoB ? consumoTotal : consumoFP,
+      dem_p:  grupoB ? 0 : demP,
+      dem_fp: grupoB ? 0 : demFP,
       tar_dem_p:  tar.tusd_dem_p  || 0,
       tar_dem_fp: tar.tusd_dem_fp || 0,
       tusd_cons_p:  tar.tusd_cons_p,
@@ -291,17 +307,85 @@ export default function App() {
       bandeira, tip,
       disponibilidade_kwh: 0,
       desconto_gd: desconto/100,
-      fator_geracao: fatorVigente(conc),
+      fator_geracao: grupoB ? 1 : fatorVigente(conc),
     }, conc);
-  }, [conc, grupo, modal, consumoP, consumoFP, demP, demFP, tar,
+  }, [conc, grupo, grupoB, modal, consumoP, consumoFP, consumoTotal, demP, demFP, tar,
       icms, pis, cofins, bandeira, tip, desconto]);
 
+
+  // ── SIDEBAR CONTENT ──────────────────────────────────────────────────────────
+  const sidebarContent = (
+    <div className="sidebar-scroll">
+        <div className="sb-section-title"><User size={11}/> Dados do Cliente</div>
+        <TextInput label="Nome" value={nomeCliente} onChange={setNomeCliente} placeholder="Nome completo"/>
+        <div className="row-2">
+          <TextInput label="CPF / CNPJ" value={cpfCliente} onChange={setCpfCliente} placeholder="000.000.000-00"/>
+          <TextInput label="Telefone" value={telCliente} onChange={setTelCliente} placeholder="(81) 99999-9999"/>
+        </div>
+        <TextInput label="Endereço" value={endCliente} onChange={setEndCliente} placeholder="Rua, número, cidade"/>
+        <div className="divider"/>
+        <div className="sb-section-title"><Building2 size={11}/> Concessionária</div>
+        <div className="select-wrap">
+          <select value={concId} onChange={e => setConcId(e.target.value)} className="select">
+            {CONCESSIONARIAS.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
+          </select>
+          <ChevronDown size={13} className="select-icon"/>
+        </div>
+        <div className="row-2">
+          <div className="input-group">
+            <label className="numinput-label">Grupo</label>
+            <div className="toggle-group">
+              {["A4","A3","B"].map(g => <button key={g} className={`toggle-btn ${grupo===g?"active":""}`} onClick={() => escolherGrupo(g)}>{g}</button>)}
+            </div>
+          </div>
+          <div className="input-group">
+            <label className="numinput-label">Modalidade</label>
+            <div className="toggle-group">
+              {(grupoB ? ["CONVENCIONAL"] : ["AZUL","VERDE"]).map(m => <button key={m} className={`toggle-btn ${modal===m?"active":""}`} onClick={() => setModal(m)}>{m}</button>)}
+            </div>
+          </div>
+        </div>
+        <div className="divider"/>
+        <div className="sb-section-title"><Gauge size={11}/> {grupoB ? "Consumo" : "Consumo & Demanda"}</div>
+        {grupoB ? (
+          <NumInput label="Consumo Total (kWh)" value={consumoTotal} onChange={setConsumoTotal} unit=" kWh"/>
+        ) : (<>
+          <NumInput label="Consumo Ponta (kWh)" value={consumoP} onChange={setConsumoP} unit=" kWh"/>
+          <NumInput label="Consumo Fora Ponta (kWh)" value={consumoFP} onChange={setConsumoFP} unit=" kWh"/>
+          <div className="row-2">
+            <NumInput label="Demanda FP (kW)" value={demFP} onChange={setDemFP} unit=" kW"/>
+            <NumInput label="Demanda Ponta (kW)" value={demP} onChange={setDemP} unit=" kW"/>
+          </div>
+        </>)}
+        <div className="divider"/>
+        <div className="sb-section-title"><Gauge size={11}/> Tributos</div>
+        <div className="row-2">
+          <NumInput label="ICMS (%)" value={icms} onChange={setIcms} fmtFn={v=>`${v.toFixed(1)}%`}/>
+          <NumInput label="PIS (%)" value={pis} onChange={setPis} fmtFn={v=>`${v.toFixed(3)}%`}/>
+        </div>
+        <div className="row-2">
+          <NumInput label="COFINS (%)" value={cofins} onChange={setCofins} fmtFn={v=>`${v.toFixed(3)}%`}/>
+          <NumInput label="Bandeira (R$/kWh)" value={bandeira} onChange={setBandeira} fmtFn={v=>`R$ ${v.toFixed(4)}`}/>
+        </div>
+        <NumInput label="TIP — Taxa Ilum. Pública (R$)" value={tip} onChange={setTip} fmtFn={v=>`R$ ${fmtK(v)}`}/>
+        <div className="divider"/>
+        <div className="desconto-box">
+          <div className="sb-section-title" style={{marginBottom:6}}><Leaf size={11}/> Desconto GD</div>
+          <NumInput label="Desconto ao cliente (%)" value={desconto} onChange={setDesconto} fmtFn={v=>`${v}%`}/>
+          <div className="desconto-info">Tarifa final: <strong>{r ? fmtN(r.tar_desconto_c_trib,6) : "—"} R$/kWh</strong></div>
+        </div>
+    </div>
+  );
 
   // Concessionária ainda sem tarifa cadastrada: mostra aviso e leva para Configurações
   if (!r) return (
     <div className="app">
       <Header theme={theme} setTheme={setTheme} activeTab={activeTab} switchTab={switchTab} setSidebarOpen={setSidebarOpen} logo={marca?.logo_url} nomeMarca={marca?.nome} alturaLogo={marca?.logo_altura}/>
+      {sidebarOpen && <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)}/>}
       <div className="layout">
+        <aside className={`sidebar ${sidebarOpen ? "open" : ""}`}>
+          {sidebarContent}
+        </aside>
         <main className="main">
           {activeTab === "config"
             ? <ConfigPage colors={colors} onChange={(c) => { setColors(c); applyColors(c); }}/>
@@ -311,8 +395,9 @@ export default function App() {
                   <h2>Tarifas não cadastradas</h2>
                   <p>
                     {conc ? conc.nome : "Esta concessionária"} ainda não tem tarifas digitadas.
-                    Abra Configurações, gaveta Tarifas concessionárias, e preencha ao menos a TE
-                    de ponta e de fora ponta do A4.
+                    {grupoB
+                      ? " Abra Configurações, gaveta Tarifas concessionárias, e preencha a TUSD e a TE do Grupo B."
+                      : " Abra Configurações, gaveta Tarifas concessionárias, e preencha ao menos a TE de ponta e de fora ponta do A4."}
                   </p>
                   <button className="tar-btn tar-btn-edit" onClick={() => switchTab("config")}>
                     Ir para Configurações
@@ -328,7 +413,7 @@ export default function App() {
 
   // ── Propostas salvas ────────────────────────────────────────────────────────
   const inputsAtuais = () => ({
-    concId, grupo, modal, consumoP, consumoFP, demP, demFP,
+    concId, grupo, modal, consumoP, consumoFP, consumoTotal, demP, demFP,
     icms, pis, cofins, bandeira, tip, desconto,
     editTarifas, editTar,
     cliente: { nome: nomeCliente, cpf: cpfCliente, tel: telCliente, end: endCliente },
@@ -338,6 +423,7 @@ export default function App() {
     if (!d) return;
     setConcId(d.concId); setGrupo(d.grupo); setModal(d.modal);
     setConsumoP(d.consumoP); setConsumoFP(d.consumoFP);
+    if (d.consumoTotal != null) setConsumoTotal(d.consumoTotal);
     setDemP(d.demP); setDemFP(d.demFP);
     setIcms(d.icms); setPis(d.pis); setCofins(d.cofins);
     setBandeira(d.bandeira); setTip(d.tip); setDesconto(d.desconto);
@@ -373,29 +459,33 @@ export default function App() {
   };
 
   const mult = r.mult;
+  // Volumes exibidos: no Grupo B o consumo total entra como um posto único
+  const cP   = grupoB ? 0 : consumoP;
+  const cFP  = grupoB ? consumoTotal : consumoFP;
+  const cTot = cP + cFP;
 
   // Rows fatura atual
   const rowsAtual = [
-    { label:"TE Ponta",             tarifa: fmtN(tar.te_p,6),          volume: `${fmtK(consumoP)} kWh`,  valor: r.fa.te_p },
-    { label:"TE Fora Ponta",        tarifa: fmtN(tar.te_fp,6),         volume: `${fmtK(consumoFP)} kWh`, valor: r.fa.te_fp },
-    { label:"TUSD Cons. Ponta",     tarifa: fmtN(tar.tusd_cons_p,6),   volume: `${fmtK(consumoP)} kWh`,  valor: r.fa.tusd_p },
-    { label:"TUSD Cons. FP",        tarifa: fmtN(tar.tusd_cons_fp,6),  volume: `${fmtK(consumoFP)} kWh`, valor: r.fa.tusd_fp },
+    { label:"TE Ponta",             tarifa: fmtN(tar.te_p,6),          volume: `${fmtK(cP)} kWh`,  valor: r.fa.te_p },
+    { label: grupoB ? "TE" : "TE Fora Ponta", tarifa: fmtN(tar.te_fp,6),         volume: `${fmtK(cFP)} kWh`, valor: r.fa.te_fp },
+    { label:"TUSD Cons. Ponta",     tarifa: fmtN(tar.tusd_cons_p,6),   volume: `${fmtK(cP)} kWh`,  valor: r.fa.tusd_p },
+    { label: grupoB ? "TUSD" : "TUSD Cons. FP", tarifa: fmtN(tar.tusd_cons_fp,6),  volume: `${fmtK(cFP)} kWh`, valor: r.fa.tusd_fp },
     { label:"Demanda Ponta",        tarifa: fmtN(tar.tusd_dem_p * mult,2),  volume: `${demP} kW`,  valor: r.fa.dem_p },
     { label:"Demanda FP",           tarifa: fmtN(tar.tusd_dem_fp * mult,2), volume: `${demFP} kW`, valor: r.fa.dem_fp },
-    { label:"Bandeira",             tarifa: fmtN(bandeira,4),          volume: `${fmtK(consumoP+consumoFP)} kWh`, valor: r.fa.bandeira },
+    { label:"Bandeira",             tarifa: fmtN(bandeira,4),          volume: `${fmtK(cTot)} kWh`, valor: r.fa.bandeira },
     { label:"TIP",                  tarifa: "—",                       volume: "—",                      valor: r.fa.tip },
   ];
 
   // Rows fatura GD (itens de consumo × ratio, demanda igual)
   const ratio = r.tar_desconto / r.tar_media;
   const rowsGD = [
-    { label:"TE Ponta",             tarifa: fmtN(tar.te_p*ratio,6),         volume: `${fmtK(consumoP)} kWh`,  valor: r.fg.te_p },
-    { label:"TE Fora Ponta",        tarifa: fmtN(tar.te_fp*ratio,6),        volume: `${fmtK(consumoFP)} kWh`, valor: r.fg.te_fp },
-    { label:"TUSD Cons. Ponta",     tarifa: fmtN(tar.tusd_cons_p*ratio,6),  volume: `${fmtK(consumoP)} kWh`,  valor: r.fg.tusd_p },
-    { label:"TUSD Cons. FP",        tarifa: fmtN(tar.tusd_cons_fp*ratio,6), volume: `${fmtK(consumoFP)} kWh`, valor: r.fg.tusd_fp },
+    { label:"TE Ponta",             tarifa: fmtN(tar.te_p*ratio,6),         volume: `${fmtK(cP)} kWh`,  valor: r.fg.te_p },
+    { label: grupoB ? "TE" : "TE Fora Ponta", tarifa: fmtN(tar.te_fp*ratio,6),        volume: `${fmtK(cFP)} kWh`, valor: r.fg.te_fp },
+    { label:"TUSD Cons. Ponta",     tarifa: fmtN(tar.tusd_cons_p*ratio,6),  volume: `${fmtK(cP)} kWh`,  valor: r.fg.tusd_p },
+    { label: grupoB ? "TUSD" : "TUSD Cons. FP", tarifa: fmtN(tar.tusd_cons_fp*ratio,6), volume: `${fmtK(cFP)} kWh`, valor: r.fg.tusd_fp },
     { label:"Demanda Ponta",        tarifa: fmtN(tar.tusd_dem_p * mult,2),  volume: `${demP} kW`,  valor: r.fg.dem_p },
     { label:"Demanda FP",           tarifa: fmtN(tar.tusd_dem_fp * mult,2), volume: `${demFP} kW`, valor: r.fg.dem_fp },
-    { label:"Bandeira",             tarifa: fmtN(bandeira,4),               volume: `${fmtK(consumoP+consumoFP)} kWh`, valor: r.fg.bandeira },
+    { label:"Bandeira",             tarifa: fmtN(bandeira,4),               volume: `${fmtK(cTot)} kWh`, valor: r.fg.bandeira },
     { label:"TIP",                  tarifa: "—",                            volume: "—",                      valor: r.fg.tip },
   ];
 
@@ -407,71 +497,16 @@ export default function App() {
   ];
 
   const chartUsinaData = [
-    { name:"Receita A4",    value: r.usina.receita_mensal,          fill: theme==="light"?"#1e8449":"#2ecc71" },
-    { name:"Custo Oport.",  value: r.usina.custo_oport_mensal,       fill:"#ef4444" },
-    { name:"Líquido A4",    value: r.usina.resultado_liquido_mensal, fill:"#3b82f6" },
-    { name:"Receita B3",    value: r.usina.receita_b3_mensal,        fill:"#f59e0b" },
+    { name:`Receita ${grupo}`, value: r.usina.receita_mensal,          fill: theme==="light"?"#1e8449":"#2ecc71" },
+    { name:"Custo Oport.",     value: r.usina.custo_oport_mensal,       fill:"#ef4444" },
+    { name:`Líquido ${grupo}`, value: r.usina.resultado_liquido_mensal, fill:"#3b82f6" },
+    ...(grupoB ? [] : [{ name:"Receita B3", value: r.usina.receita_b3_mensal, fill:"#f59e0b" }]),
   ];
 
-  // ── SIDEBAR CONTENT ──────────────────────────────────────────────────────────
-  const sidebarContent = (
-    <div className="sidebar-scroll">
-        <div className="sb-section-title"><User size={11}/> Dados do Cliente</div>
-        <TextInput label="Nome" value={nomeCliente} onChange={setNomeCliente} placeholder="Nome completo"/>
-        <div className="row-2">
-          <TextInput label="CPF / CNPJ" value={cpfCliente} onChange={setCpfCliente} placeholder="000.000.000-00"/>
-          <TextInput label="Telefone" value={telCliente} onChange={setTelCliente} placeholder="(81) 99999-9999"/>
-        </div>
-        <TextInput label="Endereço" value={endCliente} onChange={setEndCliente} placeholder="Rua, número, cidade"/>
-        <div className="divider"/>
-        <div className="sb-section-title"><Building2 size={11}/> Concessionária</div>
-        <div className="select-wrap">
-          <select value={concId} onChange={e => setConcId(e.target.value)} className="select">
-            {CONCESSIONARIAS.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
-          </select>
-          <ChevronDown size={13} className="select-icon"/>
-        </div>
-        <div className="row-2">
-          <div className="input-group">
-            <label className="numinput-label">Grupo</label>
-            <div className="toggle-group">
-              {["A4","A3"].map(g => <button key={g} className={`toggle-btn ${grupo===g?"active":""}`} onClick={() => setGrupo(g)}>{g}</button>)}
-            </div>
-          </div>
-          <div className="input-group">
-            <label className="numinput-label">Modalidade</label>
-            <div className="toggle-group">
-              {["AZUL","VERDE"].map(m => <button key={m} className={`toggle-btn ${modal===m?"active":""}`} onClick={() => setModal(m)}>{m}</button>)}
-            </div>
-          </div>
-        </div>
-        <div className="divider"/>
-        <div className="sb-section-title"><Gauge size={11}/> Consumo & Demanda</div>
-        <NumInput label="Consumo Ponta (kWh)" value={consumoP} onChange={setConsumoP} unit=" kWh"/>
-        <NumInput label="Consumo Fora Ponta (kWh)" value={consumoFP} onChange={setConsumoFP} unit=" kWh"/>
-        <div className="row-2">
-          <NumInput label="Demanda FP (kW)" value={demFP} onChange={setDemFP} unit=" kW"/>
-          <NumInput label="Demanda Ponta (kW)" value={demP} onChange={setDemP} unit=" kW"/>
-        </div>
-        <div className="divider"/>
-        <div className="sb-section-title"><Gauge size={11}/> Tributos</div>
-        <div className="row-2">
-          <NumInput label="ICMS (%)" value={icms} onChange={setIcms} fmtFn={v=>`${v.toFixed(1)}%`}/>
-          <NumInput label="PIS (%)" value={pis} onChange={setPis} fmtFn={v=>`${v.toFixed(3)}%`}/>
-        </div>
-        <div className="row-2">
-          <NumInput label="COFINS (%)" value={cofins} onChange={setCofins} fmtFn={v=>`${v.toFixed(3)}%`}/>
-          <NumInput label="Bandeira (R$/kWh)" value={bandeira} onChange={setBandeira} fmtFn={v=>`R$ ${v.toFixed(4)}`}/>
-        </div>
-        <NumInput label="TIP — Taxa Ilum. Pública (R$)" value={tip} onChange={setTip} fmtFn={v=>`R$ ${fmtK(v)}`}/>
-        <div className="divider"/>
-        <div className="desconto-box">
-          <div className="sb-section-title" style={{marginBottom:6}}><Leaf size={11}/> Desconto GD</div>
-          <NumInput label="Desconto ao cliente (%)" value={desconto} onChange={setDesconto} fmtFn={v=>`${v}%`}/>
-          <div className="desconto-info">Tarifa final: <strong>{fmtN(r.tar_desconto_c_trib,6)} R$/kWh</strong></div>
-        </div>
-    </div>
-  );
+  // Tarifa líquida da usina: receita da energia compensada menos o custo dos kWh extras,
+  // dividida por tudo o que a usina injetou (compensado + extra)
+  const kwhInjetados    = cTot + r.kwh_extra;
+  const tarLiquidaUsina = kwhInjetados > 0 ? r.usina.resultado_liquido_mensal / kwhInjetados : 0;
 
   // ── Bloco editar tarifas ──────────────────────────────────────────────────────
   const editTarifasBlock = (
@@ -491,14 +526,17 @@ export default function App() {
       </div>
       {editTarifas ? (
         <div className="tarifas-edit-grid">
-          {[
+          {(grupoB ? [
+            ["TUSD (R$/kWh)", "tusd_cons_fp"],
+            ["TE (R$/kWh)",   "te_fp"],
+          ] : [
             ["TUSD Cons. Ponta (R$/kWh)", "tusd_cons_p"],
             ["TUSD Cons. FP (R$/kWh)",    "tusd_cons_fp"],
             ["TE Ponta (R$/kWh)",          "te_p"],
             ["TE FP (R$/kWh)",             "te_fp"],
             ["TUSD Dem. Ponta (R$/kW)",    "tusd_dem_p"],
             ["TUSD Dem. FP (R$/kW)",       "tusd_dem_fp"],
-          ].map(([label, key]) => (
+          ]).map(([label, key]) => (
             <div key={key} className="tar-edit-item">
               <span className="tar-edit-label">{label}</span>
               <input className="tar-edit-input" type="text" value={editTar[key] ?? ""}
@@ -508,7 +546,12 @@ export default function App() {
         </div>
       ) : (
         <div className="tarifas-ref" style={{width:"100%"}}>
-          {[
+          {(grupoB ? [
+            ["TUSD",         fmtN(tar.tusd_cons_fp,6)],
+            ["TE",           fmtN(tar.te_fp,6)],
+            ["Total s/trib", fmtN(r.tar_total_fp,6)],
+            ["Total c/trib", fmtN(r.tar_total_fp_trib,6)],
+          ] : [
             ["TUSD Cons. P", fmtN(tar.tusd_cons_p,6)],
             ["TUSD Cons. FP",fmtN(tar.tusd_cons_fp,6)],
             ["TE Ponta",      fmtN(tar.te_p,6)],
@@ -519,7 +562,7 @@ export default function App() {
             ["Total FP s/trib",fmtN(r.tar_total_fp,6)],
             ["Total P c/trib", fmtN(r.tar_total_p_trib,6)],
             ["Total FP c/trib",fmtN(r.tar_total_fp_trib,6)],
-          ].map(([k,v],i) => (
+          ]).map(([k,v],i) => (
             <div key={i} className="tar-item"><span>{k}</span><strong>{v}</strong></div>
           ))}
         </div>
@@ -562,7 +605,7 @@ export default function App() {
       {editTarifasBlock}
 
       <div className="kpi-grid">
-        <KpiCard label="Fatura Atual" value={fmt(r.fa.total)} icon={DollarSign} color="neutral" sub={`${fmtK(consumoP+consumoFP)} kWh totais`}/>
+        <KpiCard label="Fatura Atual" value={fmt(r.fa.total)} icon={DollarSign} color="neutral" sub={`${fmtK(cTot)} kWh totais`}/>
         <KpiCard label="Fatura com GD" value={fmt(r.fg.total)} icon={Leaf} color="green"/>
         <KpiCard label="Economia Mensal" value={fmt(r.economia_total)} icon={TrendingDown} color="accent" delta={-r.pct_economia}/>
         <KpiCard label="Economia Anual" value={fmt(r.economia_total*12)} icon={BarChart3} color="accent" sub="12 meses"/>
@@ -585,7 +628,7 @@ export default function App() {
         <div className="economia-mid">
           <div className="economia-label">de economia na fatura do cliente</div>
           <div className="economia-subs">
-            <span>Tarifa média A4: <strong>{fmtN(r.tar_media_c_trib,6)} R$/kWh</strong></span>
+            <span>Tarifa média {grupo}: <strong>{fmtN(r.tar_media_c_trib,6)} R$/kWh</strong></span>
             <span>Com GD ({desconto}% desc.): <strong>{fmtN(r.tar_desconto_c_trib,6)} R$/kWh</strong></span>
             <span>Fator ajuste ponta: <strong>{fmtN(r.fator_geracao,4)}×</strong></span>
           </div>
@@ -601,7 +644,7 @@ export default function App() {
           <div className="geracao-grid">
             <div className="geracao-card">
               <div className="geracao-label">Consumo real</div>
-              <div className="geracao-value">{fmtK(consumoP+consumoFP)} kWh</div>
+              <div className="geracao-value">{fmtK(cTot)} kWh</div>
             </div>
             <div className="geracao-arrow">→</div>
             <div className="geracao-card geracao-card-accent">
@@ -650,9 +693,9 @@ export default function App() {
       </div>
 
       <div className="usina-full-grid">
-        <Section title="Receita — Cliente A4">
+        <Section title={`Receita — Cliente ${grupo}`}>
           <div className="usina-bloco">
-            <div className="usina-row"><span>Energia compensada</span><strong>{fmtK(consumoP+consumoFP)} kWh</strong></div>
+            <div className="usina-row"><span>Energia compensada</span><strong>{fmtK(cTot)} kWh</strong></div>
             <div className="usina-row"><span>Tarifa c/ desc COM tributos</span><strong>{fmtN(r.tar_desconto_c_trib,6)} R$/kWh</strong></div>
             <div className="usina-row usina-row-total"><span>Receita bruta mensal</span><strong>{fmt(r.usina.receita_mensal)}</strong></div>
             <div className="usina-row usina-row-total"><span>Receita bruta anual</span><strong>{fmt(r.usina.receita_anual)}</strong></div>
@@ -672,6 +715,8 @@ export default function App() {
             <div className="usina-row"><span>(−) Custo oportunidade</span><strong style={{color:"var(--warn)"}}>− {fmt(r.usina.custo_oport_mensal)}</strong></div>
             <div className="usina-row usina-row-total highlight"><span>Líquido mensal</span><strong>{fmt(r.usina.resultado_liquido_mensal)}</strong></div>
             <div className="usina-row usina-row-total highlight"><span>Líquido anual</span><strong>{fmt(r.usina.resultado_liquido_anual)}</strong></div>
+            <div className="usina-row usina-row-total"><span>Tarifa líquida</span><strong>{fmtN(tarLiquidaUsina,6)} R$/kWh</strong></div>
+            <div className="usina-info"><Info size={11}/> {fmt(r.usina.resultado_liquido_mensal)} ÷ {fmtK(kwhInjetados)} kWh injetados ({fmtK(cTot)} compensados + {fmtK(r.kwh_extra)} extra)</div>
           </div>
         </Section>
       </div>
@@ -690,7 +735,7 @@ export default function App() {
         </ResponsiveContainer>
       </Section>
 
-      <Section title="A4 (com fator ponta) vs Grupo B3 (1:1)">
+      {!grupoB && <Section title="A4 (com fator ponta) vs Grupo B3 (1:1)">
         <div className="comparativo-box" style={{border:"none",padding:0}}>
           <div className="comparativo-grid">
             <div className="comparativo-col col-a4">
@@ -713,7 +758,7 @@ export default function App() {
             {r.usina.dif_a4_vs_b3>=0?" a mais que B3":" a mais que A4"}
           </div>
         </div>
-      </Section>
+      </Section>}
 
       <footer className="footer">
         MRE — M. Reinaux Energia · Fator de ajuste: REN 1.000/2021 Art. 655-G §5º
