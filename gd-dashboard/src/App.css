@@ -616,3 +616,22 @@ body { background: var(--bg); color: var(--text); -webkit-font-smoothing: antial
 
 .edicao-tarja { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 10px 14px; border-radius: var(--radius-sm); background: var(--accent-dim); border: 1px solid var(--accent); color: var(--text); font-size: .78rem; }
 .edicao-tarja span { flex: 1 1 240px; }
+
+/* GD II: Fio B no faturamento da usina */
+.gd2-box { background:var(--card2); border:1px solid var(--border2); border-radius:var(--radius); padding:12px; display:flex; flex-direction:column; gap:10px; margin-bottom:12px; }
+.gd2-check { display:flex; align-items:center; gap:8px; font-size:0.75rem; font-weight:600; color:var(--text); cursor:pointer; }
+.gd2-check input { width:16px; height:16px; accent-color:var(--accent); cursor:pointer; }
+.gd2-campos { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+.gd2-tabela { width:100%; border-collapse:collapse; font-size:0.7rem; }
+.gd2-tabela th { font-size:0.57rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; text-align:right; padding:6px 8px; border-bottom:1px solid var(--border); }
+.gd2-tabela th:first-child, .gd2-tabela td:first-child { text-align:left; }
+.gd2-tabela td { text-align:right; padding:6px 8px; border-bottom:1px solid var(--border); font-family:var(--font-mono); color:var(--text); cursor:pointer; }
+.gd2-tabela tr.gd2-ativo td { background:var(--accent-dim); font-weight:700; }
+@media (max-width: 768px) {
+  .gd2-campos { grid-template-columns:1fr; }
+  .gd2-tabela { font-size:0.62rem; }
+  .gd2-tabela th, .gd2-tabela td { padding:5px 4px; }
+}
+@media print {
+  .gd2-check input { display:none; }
+}

@@ -1,3 +1,15 @@
+// Parcela do Fio B não compensada na GD II, por ano (Lei 14.300/2022, art. 27).
+// De 2029 em diante a regra é da ANEEL; 100% aqui é estimativa.
+export const FIO_B_TRANSICAO = [
+  { ano: 2023, pct: 0.15 },
+  { ano: 2024, pct: 0.30 },
+  { ano: 2025, pct: 0.45 },
+  { ano: 2026, pct: 0.60 },
+  { ano: 2027, pct: 0.75 },
+  { ano: 2028, pct: 0.90 },
+  { ano: 2029, pct: 1.00, estimado: true },
+];
+
 export function calcular(params, conc) {
   const {
     grupo, modalidade,
@@ -11,6 +23,7 @@ export function calcular(params, conc) {
     disponibilidade_kwh,
     desconto_gd,
     fator_geracao: fator_informado,
+    fio_b_p = 0, fio_b_fp = 0, fio_b_pct = 0,
   } = params;
 
   const tar_total_p  = tusd_cons_p  + te_p;
@@ -85,7 +98,12 @@ export function calcular(params, conc) {
   const tar_fp_c_desc_c_trib       = te_fp * mult * (1 - desconto_gd);
   const custo_oport_mensal         = kwh_extra * tar_fp_c_desc_c_trib;
   const custo_oport_anual          = custo_oport_mensal * 12;
-  const resultado_liquido_mensal   = receita_mensal - custo_oport_mensal;
+  // GD II (Lei 14.300, art. 27): parte do Fio B sobre a energia compensada deixa de ser compensada.
+  // A distribuidora cobra do cliente, com tributos; o usineiro devolve para manter o desconto prometido.
+  const custo_fio_b_cheio          = (consumo_p * fio_b_p + cons_fp_efetivo * fio_b_fp) * mult;
+  const custo_fio_b_mensal         = custo_fio_b_cheio * fio_b_pct;
+  const custo_fio_b_anual          = custo_fio_b_mensal * 12;
+  const resultado_liquido_mensal   = receita_mensal - custo_oport_mensal - custo_fio_b_mensal;
   const resultado_liquido_anual    = resultado_liquido_mensal * 12;
 
   // Comparativo B3
@@ -109,6 +127,7 @@ export function calcular(params, conc) {
     economia_total, pct_economia,
     tributos: { base: base_sem_trib, pis: valor_pis, cofins: valor_cofins, icms: valor_icms },
     usina: { receita_mensal, receita_anual, custo_oport_mensal, custo_oport_anual,
+             custo_fio_b_cheio, custo_fio_b_mensal, custo_fio_b_anual,
              resultado_liquido_mensal, resultado_liquido_anual,
              geracao_b3, tar_b3_c_desc_c_trib, receita_b3_mensal, receita_b3_anual, dif_a4_vs_b3 },
   };
