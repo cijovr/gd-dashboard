@@ -23,7 +23,7 @@ export function calcular(params, conc) {
     disponibilidade_kwh,
     desconto_gd,
     fator_geracao: fator_informado,
-    fio_b_p = 0, fio_b_fp = 0, fio_b_pct = 0,
+    fio_b_p = 0, fio_b_fp = 0, fio_b_pct = 0, fio_b_b3 = 0,
   } = params;
 
   const tar_total_p  = tusd_cons_p  + te_p;
@@ -111,7 +111,10 @@ export function calcular(params, conc) {
   const tar_b3_c_desc_c_trib = conc.b3.total * mult * (1 - desconto_gd);
   const receita_b3_mensal    = geracao_b3 * tar_b3_c_desc_c_trib;
   const receita_b3_anual     = receita_b3_mensal * 12;
-  const dif_a4_vs_b3         = resultado_liquido_mensal - receita_b3_mensal;
+  // Na GD II o cliente B3 também deixa de compensar o Fio B, pago pelo usineiro
+  const custo_fio_b_b3_mensal = geracao_b3 * fio_b_b3 * mult * fio_b_pct;
+  const liquido_b3_mensal    = receita_b3_mensal - custo_fio_b_b3_mensal;
+  const dif_a4_vs_b3         = resultado_liquido_mensal - liquido_b3_mensal;
 
   return {
     tar_total_p, tar_total_fp,
@@ -129,6 +132,7 @@ export function calcular(params, conc) {
     usina: { receita_mensal, receita_anual, custo_oport_mensal, custo_oport_anual,
              custo_fio_b_cheio, custo_fio_b_mensal, custo_fio_b_anual,
              resultado_liquido_mensal, resultado_liquido_anual,
-             geracao_b3, tar_b3_c_desc_c_trib, receita_b3_mensal, receita_b3_anual, dif_a4_vs_b3 },
+             geracao_b3, tar_b3_c_desc_c_trib, receita_b3_mensal, receita_b3_anual,
+             custo_fio_b_b3_mensal, liquido_b3_mensal, dif_a4_vs_b3 },
   };
 }

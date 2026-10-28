@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { useConcessionarias, fatorVigente } from "./data/tarifasStore";
 import { calcular, FIO_B_TRANSICAO } from "./data/calcular";
+import { FIO_B } from "./data/fioB";
 import {
   Zap, ChevronDown, TrendingDown, TrendingUp, BarChart3,
   Building2, Gauge, DollarSign, Leaf, Info, User,
@@ -252,8 +253,9 @@ export default function App() {
   // GD II: Fio B não compensado (R$/MWh sem tributos, digitado) e ano da transição
   const anoAtual = Math.min(Math.max(new Date().getFullYear(), 2023), 2029);
   const [gd2,     setGd2]     = useState(false);
-  const [fioBP,   setFioBP]   = useState(0);
-  const [fioBFP,  setFioBFP]  = useState(0);
+  // null = usa o valor da ANEEL; número = valor digitado por cima
+  const [fioBP,   setFioBP]   = useState(null);
+  const [fioBFP,  setFioBFP]  = useState(null);
   const [anoFioB, setAnoFioB] = useState(anoAtual);
   const faixaFioB = FIO_B_TRANSICAO.find(f => f.ano === anoFioB) || FIO_B_TRANSICAO[FIO_B_TRANSICAO.length - 1];
 
@@ -297,6 +299,20 @@ export default function App() {
 
   const tar = editTarifas ? editTar : tarBase;
 
+  // Fio B da ANEEL (R$/MWh sem tributos) para a concessionária, grupo e modalidade escolhidos
+  const fioBAneel = useMemo(() => {
+    const f = FIO_B[concId];
+    if (!f) return null;
+    const v = grupo === "B" ? { p: 0, fp: f.b3 }
+      : grupo === "A3" ? f.a3?.azul
+      : (modal === "AZUL" ? f.a4?.azul : f.a4?.verde);
+    return v ? { p: v.p ?? 0, fp: v.fp ?? 0, resolucao: f.resolucao, vigencia: f.vigencia } : null;
+  }, [concId, grupo, modal]);
+  const fioBPUsado  = fioBP  ?? fioBAneel?.p  ?? 0;
+  const fioBFPUsado = fioBFP ?? fioBAneel?.fp ?? 0;
+  const fioBEditado = fioBP != null || fioBFP != null;
+  const dataBR = (iso) => iso ? iso.split("-").reverse().join("/") : "";
+
   const r = useMemo(() => {
     if (!conc || !(grupoB ? tar.te_fp : tar.te_p)) return null;
     return calcular({
@@ -316,12 +332,13 @@ export default function App() {
       disponibilidade_kwh: 0,
       desconto_gd: desconto/100,
       fator_geracao: grupoB ? 1 : fatorVigente(conc),
-      fio_b_p:   gd2 && !grupoB ? fioBP / 1000 : 0,
-      fio_b_fp:  gd2 ? fioBFP / 1000 : 0,
+      fio_b_p:   gd2 && !grupoB ? fioBPUsado / 1000 : 0,
+      fio_b_fp:  gd2 ? fioBFPUsado / 1000 : 0,
       fio_b_pct: gd2 ? faixaFioB.pct : 0,
+      fio_b_b3:  gd2 ? (FIO_B[concId]?.b3 ?? 0) / 1000 : 0,
     }, conc);
   }, [conc, grupo, grupoB, modal, consumoP, consumoFP, consumoTotal, demP, demFP, tar,
-      icms, pis, cofins, bandeira, tip, desconto, gd2, fioBP, fioBFP, faixaFioB]);
+      icms, pis, cofins, bandeira, tip, desconto, gd2, fioBPUsado, fioBFPUsado, faixaFioB, concId]);
 
 
   // ── SIDEBAR CONTENT ──────────────────────────────────────────────────────────
@@ -439,7 +456,7 @@ export default function App() {
     setDemP(d.demP); setDemFP(d.demFP);
     setIcms(d.icms); setPis(d.pis); setCofins(d.cofins);
     setBandeira(d.bandeira); setTip(d.tip); setDesconto(d.desconto);
-    setGd2(Boolean(d.gd2)); setFioBP(d.fioBP || 0); setFioBFP(d.fioBFP || 0);
+    setGd2(Boolean(d.gd2)); setFioBP(d.fioBP ?? null); setFioBFP(d.fioBFP ?? null);
     setAnoFioB(d.anoFioB || anoAtual);
     setEditTarifas(Boolean(d.editTarifas));
     if (d.editTar) setEditTar(d.editTar);
@@ -642,7 +659,13 @@ export default function App() {
         <div className="economia-mid">
           <div className="economia-label">de economia na fatura do cliente</div>
           <div className="economia-subs">
-            <span>Tarifa média {grupo}: <strong>{fmtN(r.tar_media_c_trib,6)} R$/kWh</strong></span>
+            <span>Tarifa média {grupo}: <strong>{fmtN(r.tar_media_c_trib,6)} R$/kWh</strong>
+              {!grupoB && (
+                <span className="economia-conta">
+                  {" "}= ({fmtK(cP)} kWh × {fmtN(r.tar_total_p_trib,6)} + {fmtK(cFP)} kWh × {fmtN(r.tar_total_fp_trib,6)}) ÷ {fmtK(cTot)} kWh
+                </span>
+              )}
+            </span>
             <span>Com GD ({desconto}% desc.): <strong>{fmtN(r.tar_desconto_c_trib,6)} R$/kWh</strong></span>
             <span>Fator ajuste ponta: <strong>{fmtN(r.fator_geracao,4)}×</strong></span>
           </div>
@@ -713,8 +736,8 @@ export default function App() {
         </label>
         {gd2 && (<>
           <div className="gd2-campos">
-            {!grupoB && <NumInput label="Fio B Ponta (R$/MWh, sem tributos)" value={fioBP} onChange={setFioBP} fmtFn={v=>fmtK(v)}/>}
-            <NumInput label={grupoB ? "Fio B (R$/MWh, sem tributos)" : "Fio B Fora Ponta (R$/MWh, sem tributos)"} value={fioBFP} onChange={setFioBFP} fmtFn={v=>fmtK(v)}/>
+            {!grupoB && <NumInput label="Fio B Ponta (R$/MWh, sem tributos)" value={fioBPUsado} onChange={setFioBP} fmtFn={v=>fmtK(v)}/>}
+            <NumInput label={grupoB ? "Fio B (R$/MWh, sem tributos)" : "Fio B Fora Ponta (R$/MWh, sem tributos)"} value={fioBFPUsado} onChange={setFioBFP} fmtFn={v=>fmtK(v)}/>
             <div className="numinput-group">
               <label className="numinput-label">Ano de referência</label>
               <div className="select-wrap">
@@ -725,6 +748,19 @@ export default function App() {
               </div>
             </div>
           </div>
+          <div className="usina-info">
+            <Info size={11}/>
+            {fioBAneel
+              ? <>Fio B da ANEEL ({conc?.nome}, {grupo}{grupoB ? "" : ` ${modal}`}): {fioBAneel.resolucao.replace("RESOLUÇÃO HOMOLOGATÓRIA", "REH")}, vigência {fioBAneel.vigencia.split(" a ").map(dataBR).join(" a ")}.</>
+              : <>Sem Fio B da ANEEL para esta concessionária: digite o valor.</>}
+            {fioBEditado && <> Valor editado. <button className="link-btn" onClick={() => { setFioBP(null); setFioBFP(null); }}>Usar o da ANEEL</button></>}
+          </div>
+          {!grupoB && modal === "AZUL" && (
+            <div className="usina-info"><Info size={11}/> Na Azul o Fio B está na demanda (R$/kW), que não é compensada: sobre a energia compensada ele é zero.</div>
+          )}
+          {!grupoB && modal === "VERDE" && (
+            <div className="usina-info"><Info size={11}/> Na Verde o Fio B da energia fica só na ponta (a demanda da ponta convertida em R$/MWh); na fora ponta é zero.</div>
+          )}
           <table className="gd2-tabela">
             <thead>
               <tr><th>Ano</th><th>Fio B não compensado</th><th>Custo Fio B/mês</th><th>Líquido/mês</th><th>Tarifa líquida</th></tr>
@@ -807,7 +843,7 @@ export default function App() {
               <div className="comp-label">Cliente B3</div>
               <div className="comp-kwh">{fmtK(r.usina.geracao_b3)} kWh (sem fator)</div>
               <div className="comp-receita">{fmt(r.usina.receita_b3_mensal)}<span>/mês</span></div>
-              <div className="comp-liquido comp-liquido-b3">{fmt(r.usina.receita_b3_mensal)}<span>/mês</span></div>
+              <div className="comp-liquido comp-liquido-b3">{fmt(r.usina.liquido_b3_mensal)}<span>/mês líquido{gd2 ? ` (− Fio B ${fmt(r.usina.custo_fio_b_b3_mensal)})` : ""}</span></div>
             </div>
           </div>
           <div className={`comparativo-dif ${r.usina.dif_a4_vs_b3>=0?"dif-pos":"dif-neg"}`}>
