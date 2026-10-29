@@ -1,0 +1,904 @@
+{
+  "fonte": "propostagalva.com/distribuidoras, colhido em 2026-10-28",
+  "distribuidoras": [
+    {
+      "id": "eletroacre",
+      "nome": "ELETROACRE",
+      "uf": "AC",
+      "vigencia": "2026-12-12",
+      "a4": {
+        "verde": {
+          "tusd_dem": 47,
+          "tusd_cons_p": 2.75366,
+          "tusd_cons_fp": 0.14363,
+          "te_p": 0.28833,
+          "te_fp": 0.14153
+        },
+        "azul": {
+          "tusd_dem_p": 107.69,
+          "tusd_dem_fp": 47.09,
+          "tusd_cons_p": 0.14363,
+          "tusd_cons_fp": 0.14363,
+          "te_p": 0.28833,
+          "te_fp": 0.14153
+        }
+      },
+      "b3": {
+        "tusd": 0.71668,
+        "te": 0.15713,
+        "total": 0.87381
+      },
+      "esc_hidrica": 0.01688
+    },
+    {
+      "id": "equatorial_al",
+      "nome": "EQUATORIAL AL",
+      "uf": "AL",
+      "vigencia": "2027-05-02",
+      "a4": {
+        "verde": {
+          "tusd_dem": 25.91,
+          "tusd_cons_p": 1.87514,
+          "tusd_cons_fp": 0.17195,
+          "te_p": 0.38319,
+          "te_fp": 0.19235
+        },
+        "azul": {
+          "tusd_dem_p": 70.11,
+          "tusd_dem_fp": 25.91,
+          "tusd_cons_p": 0.17195,
+          "tusd_cons_fp": 0.17195,
+          "te_p": 0.38319,
+          "te_fp": 0.19235
+        }
+      },
+      "b3": {
+        "tusd": 0.65034,
+        "te": 0.20107,
+        "total": 0.85141
+      },
+      "esc_hidrica": 0.00832
+    },
+    {
+      "id": "ame",
+      "nome": "AME",
+      "uf": "AM",
+      "vigencia": "2027-05-25",
+      "a4": {
+        "verde": {
+          "tusd_dem": 22.61,
+          "tusd_cons_p": 1.25032,
+          "tusd_cons_fp": 0.22948,
+          "te_p": 0.55479,
+          "te_fp": 0.29066
+        },
+        "azul": {
+          "tusd_dem_p": 42.12,
+          "tusd_dem_fp": 22.61,
+          "tusd_cons_p": 0.22948,
+          "tusd_cons_fp": 0.22948,
+          "te_p": 0.55479,
+          "te_fp": 0.29066
+        }
+      },
+      "b3": {
+        "tusd": 0.5946,
+        "te": 0.28111,
+        "total": 0.87571
+      },
+      "esc_hidrica": 0.00338
+    },
+    {
+      "id": "cea",
+      "nome": "CEA",
+      "uf": "AP",
+      "vigencia": "2026-12-12",
+      "a4": {
+        "verde": {
+          "tusd_dem": 48.73,
+          "tusd_cons_p": 2.9972,
+          "tusd_cons_fp": 0.26738,
+          "te_p": 0.26573,
+          "te_fp": 0.07571
+        },
+        "azul": {
+          "tusd_dem_p": 112.79,
+          "tusd_dem_fp": 48.73,
+          "tusd_cons_p": 0.26738,
+          "tusd_cons_fp": 0.26738,
+          "te_p": 0.26573,
+          "te_fp": 0.07571
+        }
+      },
+      "b3": {
+        "tusd": 0.7841,
+        "te": 0.04105,
+        "total": 0.82515
+      },
+      "esc_hidrica": 0.04411
+    },
+    {
+      "id": "coelba",
+      "nome": "COELBA",
+      "uf": "BA",
+      "vigencia": "2027-05-01",
+      "a4": {
+        "verde": {
+          "tusd_dem": 39.87,
+          "tusd_cons_p": 2.75779,
+          "tusd_cons_fp": 0.1391,
+          "te_p": 0.44144,
+          "te_fp": 0.25224
+        },
+        "azul": {
+          "tusd_dem_p": 107.84,
+          "tusd_dem_fp": 39.87,
+          "tusd_cons_p": 0.1391,
+          "tusd_cons_fp": 0.1391,
+          "te_p": 0.44144,
+          "te_fp": 0.25224
+        }
+      },
+      "b3": {
+        "tusd": 0.62008,
+        "te": 0.25765,
+        "total": 0.87773
+      },
+      "esc_hidrica": 0.00392
+    },
+    {
+      "id": "enel_ce",
+      "nome": "ENEL CE",
+      "uf": "CE",
+      "vigencia": "2027-05-01",
+      "a4": {
+        "verde": {
+          "tusd_dem": 20.82,
+          "tusd_cons_p": 1.13477,
+          "tusd_cons_fp": 0.12386,
+          "te_p": 0.4092,
+          "te_fp": 0.24531
+        },
+        "azul": {
+          "tusd_dem_p": 41.65,
+          "tusd_dem_fp": 20.82,
+          "tusd_cons_p": 0.12386,
+          "tusd_cons_fp": 0.12386,
+          "te_p": 0.4092,
+          "te_fp": 0.24531
+        }
+      },
+      "b3": {
+        "tusd": 0.48878,
+        "te": 0.26099,
+        "total": 0.74977
+      },
+      "esc_hidrica": 0.01081
+    },
+    {
+      "id": "neoenergia_df",
+      "nome": "NEOENERGIA DF",
+      "uf": "DF",
+      "vigencia": "2027-10-21",
+      "a4": {
+        "verde": {
+          "tusd_dem": 22.61,
+          "tusd_cons_p": 1.25032,
+          "tusd_cons_fp": 0.22948,
+          "te_p": 0.55479,
+          "te_fp": 0.29066
+        },
+        "azul": {
+          "tusd_dem_p": 42.12,
+          "tusd_dem_fp": 22.61,
+          "tusd_cons_p": 0.22948,
+          "tusd_cons_fp": 0.22948,
+          "te_p": 0.55479,
+          "te_fp": 0.29066
+        }
+      },
+      "b3": {
+        "tusd": 0.5946,
+        "te": 0.28111,
+        "total": 0.87571
+      },
+      "esc_hidrica": 0.00338
+    },
+    {
+      "id": "equatorial_go",
+      "nome": "EQUATORIAL GO",
+      "uf": "GO",
+      "vigencia": "2027-10-21",
+      "a4": {
+        "verde": {
+          "tusd_dem": 28.01,
+          "tusd_cons_p": 1.79432,
+          "tusd_cons_fp": 0.16431,
+          "te_p": 0.51371,
+          "te_fp": 0.32102
+        },
+        "azul": {
+          "tusd_dem_p": 67.12,
+          "tusd_dem_fp": 28.01,
+          "tusd_cons_p": 0.16431,
+          "tusd_cons_fp": 0.16431,
+          "te_p": 0.51371,
+          "te_fp": 0.32102
+        }
+      },
+      "b3": {
+        "tusd": 0.61738,
+        "te": 0.33701,
+        "total": 0.95439
+      },
+      "esc_hidrica": 0.00372
+    },
+    {
+      "id": "equatorial_ma",
+      "nome": "EQUATORIAL MA",
+      "uf": "MA",
+      "vigencia": "2027-08-27",
+      "a4": {
+        "verde": {
+          "tusd_dem": 31.8,
+          "tusd_cons_p": 2.39324,
+          "tusd_cons_fp": 0.15513,
+          "te_p": 0.47206,
+          "te_fp": 0.27606
+        },
+        "azul": {
+          "tusd_dem_p": 92.15,
+          "tusd_dem_fp": 31.8,
+          "tusd_cons_p": 0.15513,
+          "tusd_cons_fp": 0.15513,
+          "te_p": 0.47206,
+          "te_fp": 0.27606
+        }
+      },
+      "b3": {
+        "tusd": 0.60754,
+        "te": 0.2813,
+        "total": 0.88884
+      },
+      "esc_hidrica": 0.0035
+    },
+    {
+      "id": "cemig",
+      "nome": "CEMIG",
+      "uf": "MG",
+      "vigencia": "2027-05-27",
+      "a4": {
+        "verde": {
+          "tusd_dem": 23.77,
+          "tusd_cons_p": 1.91296,
+          "tusd_cons_fp": 0.18579,
+          "te_p": 0.47422,
+          "te_fp": 0.29498
+        },
+        "azul": {
+          "tusd_dem_p": 71.13,
+          "tusd_dem_fp": 23.77,
+          "tusd_cons_p": 0.18579,
+          "tusd_cons_fp": 0.18579,
+          "te_p": 0.47422,
+          "te_fp": 0.29498
+        }
+      },
+      "b3": {
+        "tusd": 0.59308,
+        "te": 0.31021,
+        "total": 0.90329
+      },
+      "esc_hidrica": 0.00425
+    },
+    {
+      "id": "energisa_mt",
+      "nome": "ENERGISA MT",
+      "uf": "MT",
+      "vigencia": "2027-04-15",
+      "a4": {
+        "verde": {
+          "tusd_dem": 34.03,
+          "tusd_cons_p": 1.80798,
+          "tusd_cons_fp": 0.16594,
+          "te_p": 0.4892,
+          "te_fp": 0.28446
+        },
+        "azul": {
+          "tusd_dem_p": 67.62,
+          "tusd_dem_fp": 34.03,
+          "tusd_cons_p": 0.16594,
+          "tusd_cons_fp": 0.16594,
+          "te_p": 0.4892,
+          "te_fp": 0.28446
+        }
+      },
+      "b3": {
+        "tusd": 0.60528,
+        "te": 0.29414,
+        "total": 0.89942
+      },
+      "esc_hidrica": 0.02639
+    },
+    {
+      "id": "equatorial_pa",
+      "nome": "EQUATORIAL PA",
+      "uf": "PA",
+      "vigencia": "2027-08-06",
+      "a4": {
+        "verde": {
+          "tusd_dem": 43.45,
+          "tusd_cons_p": 2.52047,
+          "tusd_cons_fp": 0.19197,
+          "te_p": 0.4913,
+          "te_fp": 0.28528
+        },
+        "azul": {
+          "tusd_dem_p": 95.9,
+          "tusd_dem_fp": 43.45,
+          "tusd_cons_p": 0.19197,
+          "tusd_cons_fp": 0.19197,
+          "te_p": 0.4913,
+          "te_fp": 0.28528
+        }
+      },
+      "b3": {
+        "tusd": 0.7543,
+        "te": 0.28892,
+        "total": 1.04322
+      },
+      "esc_hidrica": 0.00336
+    },
+    {
+      "id": "energisa_pb",
+      "nome": "ENERGISA PB",
+      "uf": "PB",
+      "vigencia": "2027-08-27",
+      "a4": {
+        "verde": {
+          "tusd_dem": 24.21,
+          "tusd_cons_p": 1.2899,
+          "tusd_cons_fp": 0.12652,
+          "te_p": 0.42819,
+          "te_fp": 0.24537
+        },
+        "azul": {
+          "tusd_dem_p": 47.91,
+          "tusd_dem_fp": 24.21,
+          "tusd_cons_p": 0.12652,
+          "tusd_cons_fp": 0.12652,
+          "te_p": 0.42819,
+          "te_fp": 0.24537
+        }
+      },
+      "b3": {
+        "tusd": 0.46032,
+        "te": 0.24938,
+        "total": 0.7097
+      },
+      "esc_hidrica": 0.00326
+    },
+    {
+      "id": "neoenergia_pe",
+      "nome": "NEOENERGIA PE",
+      "uf": "PE",
+      "vigencia": "2027-04-29",
+      "a4": {
+        "verde": {
+          "tusd_dem": 19.51,
+          "tusd_cons_p": 1.12806,
+          "tusd_cons_fp": 0.12359,
+          "te_p": 0.4377,
+          "te_fp": 0.25527
+        },
+        "azul": {
+          "tusd_dem_p": 41.55,
+          "tusd_dem_fp": 19.51,
+          "tusd_cons_p": 0.12359,
+          "tusd_cons_fp": 0.12359,
+          "te_p": 0.4377,
+          "te_fp": 0.25527
+        }
+      },
+      "b3": {
+        "tusd": 0.53521,
+        "te": 0.26365,
+        "total": 0.79886
+      },
+      "esc_hidrica": 0.00424
+    },
+    {
+      "id": "equatorial_pi",
+      "nome": "EQUATORIAL PI",
+      "uf": "PI",
+      "vigencia": "2026-12-01",
+      "a4": {
+        "verde": {
+          "tusd_dem": 32.5,
+          "tusd_cons_p": 2.29663,
+          "tusd_cons_fp": 0.14021,
+          "te_p": 0.46025,
+          "te_fp": 0.2817
+        },
+        "azul": {
+          "tusd_dem_p": 88.82,
+          "tusd_dem_fp": 32.5,
+          "tusd_cons_p": 0.14021,
+          "tusd_cons_fp": 0.14021,
+          "te_p": 0.46025,
+          "te_fp": 0.2817
+        }
+      },
+      "b3": {
+        "tusd": 0.64722,
+        "te": 0.29947,
+        "total": 0.94669
+      },
+      "esc_hidrica": 0.00512
+    },
+    {
+      "id": "copel_pr",
+      "nome": "COPEL PR",
+      "uf": "PR",
+      "vigencia": "2027-06-23",
+      "a4": {
+        "verde": {
+          "tusd_dem": 25.33,
+          "tusd_cons_p": 1.46339,
+          "tusd_cons_fp": 0.14659,
+          "te_p": 0.47555,
+          "te_fp": 0.29575
+        },
+        "azul": {
+          "tusd_dem_p": 54.13,
+          "tusd_dem_fp": 25.33,
+          "tusd_cons_p": 0.14659,
+          "tusd_cons_fp": 0.14659,
+          "te_p": 0.47555,
+          "te_fp": 0.29575
+        }
+      },
+      "b3": {
+        "tusd": 0.45717,
+        "te": 0.31085,
+        "total": 0.76802
+      },
+      "esc_hidrica": 0.00422
+    },
+    {
+      "id": "enel_rj",
+      "nome": "ENEL RJ",
+      "uf": "RJ",
+      "vigencia": "2027-03-14",
+      "a4": {
+        "verde": {
+          "tusd_dem": 38.75,
+          "tusd_cons_p": 2.05729,
+          "tusd_cons_fp": 0.22356,
+          "te_p": 0.48969,
+          "te_fp": 0.31086
+        },
+        "azul": {
+          "tusd_dem_p": 75.54,
+          "tusd_dem_fp": 38.75,
+          "tusd_cons_p": 0.22356,
+          "tusd_cons_fp": 0.22356,
+          "te_p": 0.48969,
+          "te_fp": 0.31086
+        }
+      },
+      "b3": {
+        "tusd": 0.73172,
+        "te": 0.32938,
+        "total": 1.0611
+      },
+      "esc_hidrica": 0.00911
+    },
+    {
+      "id": "light_rj",
+      "nome": "LIGHT RJ",
+      "uf": "RJ",
+      "vigencia": "2027-03-14",
+      "a4": {
+        "verde": {
+          "tusd_dem": 28.05,
+          "tusd_cons_p": 1.17632,
+          "tusd_cons_fp": 0.21501,
+          "te_p": 0.43742,
+          "te_fp": 0.28537
+        },
+        "azul": {
+          "tusd_dem_p": 39.7,
+          "tusd_dem_fp": 28.05,
+          "tusd_cons_p": 0.21501,
+          "tusd_cons_fp": 0.21501,
+          "te_p": 0.43742,
+          "te_fp": 0.28537
+        }
+      },
+      "b3": {
+        "tusd": 0.57856,
+        "te": 0.302,
+        "total": 0.88056
+      },
+      "esc_hidrica": 0.00471
+    },
+    {
+      "id": "cosern",
+      "nome": "COSERN",
+      "uf": "RN",
+      "vigencia": "2027-04-21",
+      "a4": {
+        "verde": {
+          "tusd_dem": 32,
+          "tusd_cons_p": 2.00969,
+          "tusd_cons_fp": 0.11719,
+          "te_p": 0.48553,
+          "te_fp": 0.28257
+        },
+        "azul": {
+          "tusd_dem_p": 77.92,
+          "tusd_dem_fp": 32,
+          "tusd_cons_p": 0.11719,
+          "tusd_cons_fp": 0.11719,
+          "te_p": 0.48553,
+          "te_fp": 0.28257
+        }
+      },
+      "b3": {
+        "tusd": 0.48236,
+        "te": 0.29344,
+        "total": 0.7758
+      },
+      "esc_hidrica": 0.00403
+    },
+    {
+      "id": "ceron",
+      "nome": "CERON",
+      "uf": "RO",
+      "vigencia": "2026-12-12",
+      "a4": {
+        "verde": {
+          "tusd_dem": 36.4,
+          "tusd_cons_p": 2.5299,
+          "tusd_cons_fp": 0.15417,
+          "te_p": 0.3858,
+          "te_fp": 0.20039
+        },
+        "azul": {
+          "tusd_dem_p": 97.93,
+          "tusd_dem_fp": 36.4,
+          "tusd_cons_p": 0.15417,
+          "tusd_cons_fp": 0.15417,
+          "te_p": 0.3858,
+          "te_fp": 0.20039
+        }
+      },
+      "b3": {
+        "tusd": 0.62226,
+        "te": 0.21913,
+        "total": 0.84139
+      },
+      "esc_hidrica": 0.00374
+    },
+    {
+      "id": "boa_vista",
+      "nome": "BOA VISTA",
+      "uf": "RR",
+      "vigencia": "2027-01-24",
+      "a4": {
+        "verde": {
+          "tusd_dem": 22.16,
+          "tusd_cons_p": 1.60696,
+          "tusd_cons_fp": 0.15459,
+          "te_p": 0.52553,
+          "te_fp": 0.32733
+        },
+        "azul": {
+          "tusd_dem_p": 59.86,
+          "tusd_dem_fp": 22.16,
+          "tusd_cons_p": 0.15459,
+          "tusd_cons_fp": 0.15459,
+          "te_p": 0.52553,
+          "te_fp": 0.32733
+        }
+      },
+      "b3": {
+        "tusd": 0.44478,
+        "te": 0.34469,
+        "total": 0.78947
+      },
+      "esc_hidrica": 0.00356
+    },
+    {
+      "id": "ceee_rs",
+      "nome": "CEEE RS",
+      "uf": "RS",
+      "vigencia": "2026-11-29",
+      "a4": {
+        "verde": {
+          "tusd_dem": 31.36,
+          "tusd_cons_p": 1.66415,
+          "tusd_cons_fp": 0.15092,
+          "te_p": 0.50961,
+          "te_fp": 0.32265
+        },
+        "azul": {
+          "tusd_dem_p": 62.33,
+          "tusd_dem_fp": 31.36,
+          "tusd_cons_p": 0.15092,
+          "tusd_cons_fp": 0.15092,
+          "te_p": 0.50961,
+          "te_fp": 0.32265
+        }
+      },
+      "b3": {
+        "tusd": 0.47863,
+        "te": 0.34337,
+        "total": 0.822
+      },
+      "esc_hidrica": 0.00397
+    },
+    {
+      "id": "celesc",
+      "nome": "CELESC",
+      "uf": "SC",
+      "vigencia": "2027-08-21",
+      "a4": {
+        "verde": {
+          "tusd_dem": 20.27,
+          "tusd_cons_p": 1.18924,
+          "tusd_cons_fp": 0.17119,
+          "te_p": 0.52711,
+          "te_fp": 0.32908
+        },
+        "azul": {
+          "tusd_dem_p": 41.83,
+          "tusd_dem_fp": 20.27,
+          "tusd_cons_p": 0.17119,
+          "tusd_cons_fp": 0.17119,
+          "te_p": 0.52711,
+          "te_fp": 0.32908
+        }
+      },
+      "b3": {
+        "tusd": 0.41404,
+        "te": 0.34571,
+        "total": 0.75975
+      },
+      "esc_hidrica": 0.00392
+    },
+    {
+      "id": "energisa_s_se",
+      "nome": "ENERGISA S SE",
+      "uf": "SE",
+      "vigencia": "2027-07-11",
+      "a4": {
+        "verde": {
+          "tusd_dem": 26.14,
+          "tusd_cons_p": 1.38143,
+          "tusd_cons_fp": 0.14535,
+          "te_p": 0.49245,
+          "te_fp": 0.3058
+        },
+        "azul": {
+          "tusd_dem_p": 50.82,
+          "tusd_dem_fp": 26.14,
+          "tusd_cons_p": 0.14535,
+          "tusd_cons_fp": 0.14535,
+          "te_p": 0.49245,
+          "te_fp": 0.3058
+        }
+      },
+      "b3": {
+        "tusd": 0.49268,
+        "te": 0.32156,
+        "total": 0.81424
+      },
+      "esc_hidrica": 0.00686
+    },
+    {
+      "id": "energisa_se",
+      "nome": "ENERGISA SE",
+      "uf": "SE",
+      "vigencia": "2027-04-21",
+      "a4": {
+        "verde": {
+          "tusd_dem": 23.82,
+          "tusd_cons_p": 1.71878,
+          "tusd_cons_fp": 0.12233,
+          "te_p": 0.46311,
+          "te_fp": 0.26488
+        },
+        "azul": {
+          "tusd_dem_p": 65.71,
+          "tusd_dem_fp": 23.82,
+          "tusd_cons_p": 0.12233,
+          "tusd_cons_fp": 0.12233,
+          "te_p": 0.46311,
+          "te_fp": 0.26488
+        }
+      },
+      "b3": {
+        "tusd": 0.4828,
+        "te": 0.27181,
+        "total": 0.75461
+      },
+      "esc_hidrica": 0.01384
+    },
+    {
+      "id": "sulgipe",
+      "nome": "SULGIPE",
+      "uf": "SE",
+      "vigencia": "2027-05-21",
+      "a4": {
+        "verde": {
+          "tusd_dem": 23.82,
+          "tusd_cons_p": 1.71878,
+          "tusd_cons_fp": 0.12233,
+          "te_p": 0.36613,
+          "te_fp": 0.22247
+        },
+        "azul": {
+          "tusd_dem_p": 65.71,
+          "tusd_dem_fp": 23.82,
+          "tusd_cons_p": 0.12233,
+          "tusd_cons_fp": 0.12233,
+          "te_p": 0.36613,
+          "te_fp": 0.22247
+        }
+      },
+      "b3": {
+        "tusd": 0.4828,
+        "te": 0.27181,
+        "total": 0.75461
+      },
+      "esc_hidrica": 0.00365
+    },
+    {
+      "id": "cpfl_paulista",
+      "nome": "CPFL PAULISTA",
+      "uf": "SP",
+      "vigencia": "2027-04-08",
+      "a4": {
+        "verde": {
+          "tusd_dem": 16.53,
+          "tusd_cons_p": 1.35157,
+          "tusd_cons_fp": 0.16416,
+          "te_p": 0.43188,
+          "te_fp": 0.27282
+        },
+        "azul": {
+          "tusd_dem_p": 48.9,
+          "tusd_dem_fp": 16.53,
+          "tusd_cons_p": 0.16416,
+          "tusd_cons_fp": 0.16416,
+          "te_p": 0.43188,
+          "te_fp": 0.27282
+        }
+      },
+      "b3": {
+        "tusd": 0.44925,
+        "te": 0.2902,
+        "total": 0.73945
+      },
+      "esc_hidrica": 0.00388
+    },
+    {
+      "id": "edp_sp",
+      "nome": "EDP SP",
+      "uf": "SP",
+      "vigencia": "2027-08-06",
+      "a4": {
+        "verde": {
+          "tusd_dem": 33.87,
+          "tusd_cons_p": 1.40747,
+          "tusd_cons_fp": 0.18213,
+          "te_p": 0.51695,
+          "te_fp": 0.32111
+        },
+        "azul": {
+          "tusd_dem_p": 50.38,
+          "tusd_dem_fp": 33.87,
+          "tusd_cons_p": 0.18213,
+          "tusd_cons_fp": 0.18213,
+          "te_p": 0.51695,
+          "te_fp": 0.32111
+        }
+      },
+      "b3": {
+        "tusd": 0.50632,
+        "te": 0.33739,
+        "total": 0.84371
+      },
+      "esc_hidrica": 0.00383
+    },
+    {
+      "id": "elektro",
+      "nome": "ELEKTRO",
+      "uf": "SP",
+      "vigencia": "2027-08-26",
+      "a4": {
+        "verde": {
+          "tusd_dem": 25.2,
+          "tusd_cons_p": 1.70728,
+          "tusd_cons_fp": 0.1719,
+          "te_p": 0.49666,
+          "te_fp": 0.31068
+        },
+        "azul": {
+          "tusd_dem_p": 63.1,
+          "tusd_dem_fp": 25.2,
+          "tusd_cons_p": 0.1719,
+          "tusd_cons_fp": 0.1719,
+          "te_p": 0.49666,
+          "te_fp": 0.31068
+        }
+      },
+      "b3": {
+        "tusd": 0.56527,
+        "te": 0.32636,
+        "total": 0.89163
+      },
+      "esc_hidrica": 0.00434
+    },
+    {
+      "id": "enel_sp",
+      "nome": "ENEL SP",
+      "uf": "SP",
+      "vigencia": "2027-07-03",
+      "a4": {
+        "verde": {
+          "tusd_dem": 19.04,
+          "tusd_cons_p": 0.92241,
+          "tusd_cons_fp": 0.15062,
+          "te_p": 0.48242,
+          "te_fp": 0.30188
+        },
+        "azul": {
+          "tusd_dem_p": 31.75,
+          "tusd_dem_fp": 19.04,
+          "tusd_cons_p": 0.15062,
+          "tusd_cons_fp": 0.15062,
+          "te_p": 0.48242,
+          "te_fp": 0.30188
+        }
+      },
+      "b3": {
+        "tusd": 0.47242,
+        "te": 0.31696,
+        "total": 0.78938
+      },
+      "esc_hidrica": 0.00799
+    },
+    {
+      "id": "energisa_to",
+      "nome": "ENERGISA TO",
+      "uf": "TO",
+      "vigencia": "2027-07-03",
+      "a4": {
+        "verde": {
+          "tusd_dem": 53.61,
+          "tusd_cons_p": 2.08833,
+          "tusd_cons_fp": 0.13257,
+          "te_p": 0.49943,
+          "te_fp": 0.30659
+        },
+        "azul": {
+          "tusd_dem_p": 80.42,
+          "tusd_dem_fp": 53.61,
+          "tusd_cons_p": 0.13257,
+          "tusd_cons_fp": 0.13257,
+          "te_p": 0.49943,
+          "te_fp": 0.30659
+        }
+      },
+      "b3": {
+        "tusd": 0.68343,
+        "te": 0.32263,
+        "total": 1.00606
+      },
+      "esc_hidrica": 0.00336
+    }
+  ]
+}

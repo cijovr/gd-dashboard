@@ -1,29 +1,14 @@
-// Tarifas digitadas pelo usuário na aba Configurações.
-// É a fonte da lista de concessionárias em toda a aplicação.
-// Persistência: localStorage. Valores em R$/kWh (energia) e R$/kW (demanda).
+// Tarifas das distribuidoras: fonte da lista de concessionárias em toda a aplicação.
+// Fonte de verdade: tabela `tarifas` no Supabase (carga inicial vinda do propostagalva.com).
+// Editadas na aba Configurações. Valores em R$/kWh (energia) e R$/kW (demanda), sem tributos.
 
 import { useSyncExternalStore } from "react";
-import { CONCESSIONARIAS } from "./tarifas";
-
-const KEY = "gd-tarifas-v1";
+import { supabase, supabaseAtivo } from "./supabase";
 
 const n = (v) => (typeof v === "number" && isFinite(v) ? v : 0);
 
-// Concessionárias que já nascem com gaveta criada.
-// id igual ao de tarifas.js quando já existe, para aproveitar o que está cadastrado.
-const BASE = [
-  { id: "ceal",          nome: "Equatorial AL",                  uf: "AL" },
-  { id: "coelba",        nome: "Neoenergia Bahia",               uf: "BA" },
-  { id: "enel_ce",       nome: "Enel Ceará",                     uf: "CE" },
-  { id: "equatorial_go", nome: "Equatorial Goiás",               uf: "GO" },
-  { id: "cemig",         nome: "Cemig Minas Gerais",             uf: "MG" },
-  { id: "energisa_mt",   nome: "Energisa Mato Grosso",           uf: "MT" },
-  { id: "equatorial_pa", nome: "Equatorial Pará",                uf: "PA" },
-  { id: "celpe",         nome: "Neoenergia Pernambuco",          uf: "PE" },
-  { id: "equatorial_pi", nome: "Equatorial Piauí",               uf: "PI" },
-  { id: "light",         nome: "Light Rio de Janeiro",           uf: "RJ" },
-  { id: "cosern",        nome: "Neoenergia Rio Grande do Norte", uf: "RN" },
-];
+// Propostas salvas antes da troca da lista guardam estes ids
+export const ID_ANTIGO = { ceal: "equatorial_al", celpe: "neoenergia_pe", light: "light_rj" };
 
 export function registroVazio(id, nome, uf) {
   return {
@@ -35,6 +20,7 @@ export function registroVazio(id, nome, uf) {
       azul:  { tusd_dem_p: 0, tusd_dem_fp: 0, tusd_cons_p: 0, tusd_cons_fp: 0, te_p: 0, te_fp: 0 },
     },
     b3: { tusd: 0, te: 0, total: 0 },
+    esc_hidrica: 0,
   };
 }
 
@@ -51,51 +37,43 @@ export function fatorVigente(c) {
 }
 
 export function temTarifa(c) {
-  return n(c?.a4?.verde?.te_p) > 0 || n(c?.a4?.azul?.te_p) > 0;
+  return n(c?.a4?.verde?.te_p) > 0 || n(c?.a4?.azul?.te_p) > 0 || n(c?.b3?.te) > 0;
 }
 
-// Semente: o que já existe em tarifas.js + as gavetas vazias das demais.
-function padrao() {
-  const antigo = {};
-  for (const c of CONCESSIONARIAS) antigo[c.id] = c;
+const daLinha = (l) => {
+  const vazio = registroVazio(l.id, l.nome, l.uf);
+  return {
+    ...vazio,
+    vigencia: l.vigencia ?? "",
+    fator_manual: l.fator_manual == null ? null : Number(l.fator_manual),
+    a4: {
+      verde: { ...vazio.a4.verde, ...(l.a4?.verde ?? {}) },
+      azul:  { ...vazio.a4.azul,  ...(l.a4?.azul  ?? {}) },
+    },
+    b3: { ...vazio.b3, ...(l.b3 ?? {}) },
+    esc_hidrica: Number(l.esc_hidrica ?? 0),
+  };
+};
 
-  const out = {};
-  for (const b of BASE) {
-    const a = antigo[b.id];
-    const vazio = registroVazio(b.id, b.nome, b.uf);
-    if (!a) { out[b.id] = vazio; continue; }
-    const tusd_b = n(a.b3?.tusd) || Math.max(n(a.b3?.total) - n(a.b3?.te), 0);
-    out[b.id] = {
-      ...a,
-      id: b.id, nome: b.nome, uf: b.uf,
-      vigencia: a.vigencia ?? "",
-      fator_manual: a.fator_manual ?? null,
-      a4: {
-        verde: { ...vazio.a4.verde, ...(a.a4?.verde ?? {}) },
-        azul:  { ...vazio.a4.azul,  ...(a.a4?.azul  ?? {}) },
-      },
-      b3: { tusd: tusd_b, te: n(a.b3?.te), total: tusd_b + n(a.b3?.te) },
-    };
-  }
-  return out;
-}
+const paraLinha = (r) => ({
+  id: r.id, nome: r.nome, uf: r.uf,
+  vigencia: r.vigencia || null,
+  fator_manual: n(r.fator_manual) > 0 ? r.fator_manual : null,
+  a4: r.a4, b3: r.b3,
+  esc_hidrica: n(r.esc_hidrica),
+  atualizado_em: new Date().toISOString(),
+});
 
-function ler() {
-  try {
-    const raw = localStorage.getItem(KEY);
-    if (!raw) return padrao();
-    return { ...padrao(), ...JSON.parse(raw) };
-  } catch {
-    return padrao();
-  }
-}
-
-let estado = ler();
+let estado = {
+  registros: {},
+  carregando: supabaseAtivo,
+  erro: supabaseAtivo ? null : "Supabase não configurado. Verifique o arquivo .env.",
+};
 let cacheLista = null;
 const ouvintes = new Set();
 
 function emitir() {
-  try { localStorage.setItem(KEY, JSON.stringify(estado)); } catch { /* cota cheia */ }
+  estado = { ...estado };
   cacheLista = null;
   ouvintes.forEach((f) => f());
 }
@@ -103,36 +81,65 @@ function emitir() {
 const subscrever = (f) => { ouvintes.add(f); return () => ouvintes.delete(f); };
 const snapshot = () => estado;
 
+async function carregar() {
+  if (!supabaseAtivo) return;
+  const { data, error } = await supabase.from("tarifas").select("*");
+  if (error) estado.erro = `Não foi possível carregar as tarifas: ${error.message}`;
+  else estado.registros = Object.fromEntries(data.map((l) => [l.id, daLinha(l)]));
+  estado.carregando = false;
+  emitir();
+}
+carregar();
+
+// Grava no Supabase; se falhar, volta ao que estava e mostra o erro
+async function gravar(antes, operacao) {
+  const { error } = await operacao;
+  if (error) {
+    estado.registros = antes;
+    estado.erro = `Não foi possível salvar: ${error.message}`;
+    emitir();
+  } else if (estado.erro) {
+    estado.erro = null;
+    emitir();
+  }
+}
+
 export const tarifasStore = {
   salvar(reg) {
     const tusd = n(reg.b3?.tusd), te = n(reg.b3?.te);
-    estado = { ...estado, [reg.id]: { ...reg, b3: { tusd, te, total: tusd + te } } };
+    const novo = { ...reg, b3: { tusd, te, total: tusd + te } };
+    const antes = estado.registros;
+    estado.registros = { ...antes, [reg.id]: novo };
     emitir();
+    gravar(antes, supabase.from("tarifas").upsert(paraLinha(novo)));
   },
   adicionar(nome, uf) {
     const base = `${uf}_${nome}`.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
     let id = base, i = 2;
-    while (estado[id]) id = `${base}_${i++}`;
-    estado = { ...estado, [id]: registroVazio(id, nome.trim(), uf.toUpperCase()) };
+    while (estado.registros[id]) id = `${base}_${i++}`;
+    const novo = registroVazio(id, nome.trim(), uf.toUpperCase());
+    const antes = estado.registros;
+    estado.registros = { ...antes, [id]: novo };
     emitir();
+    gravar(antes, supabase.from("tarifas").insert(paraLinha(novo)));
     return id;
   },
   remover(id) {
-    const { [id]: _fora, ...resto } = estado;
-    estado = resto;
+    const antes = estado.registros;
+    const { [id]: _fora, ...resto } = antes;
+    estado.registros = resto;
     emitir();
+    gravar(antes, supabase.from("tarifas").delete().eq("id", id));
   },
   limpar(id) {
-    const a = estado[id];
-    if (!a) return;
-    estado = { ...estado, [id]: registroVazio(a.id, a.nome, a.uf) };
-    emitir();
+    const a = estado.registros[id];
+    if (a) tarifasStore.salvar(registroVazio(a.id, a.nome, a.uf));
   },
 };
 
 function lista() {
   if (!cacheLista) {
-    cacheLista = Object.values(estado).sort(
+    cacheLista = Object.values(estado.registros).sort(
       (a, b) => (a.uf + a.nome).localeCompare(b.uf + b.nome, "pt-BR")
     );
   }
@@ -144,7 +151,9 @@ export function useConcessionarias() {
   return lista();
 }
 
-export function useRegistros() {
-  useSyncExternalStore(subscrever, snapshot, snapshot);
-  return lista();
+export const useRegistros = useConcessionarias;
+
+export function useSituacaoTarifas() {
+  const s = useSyncExternalStore(subscrever, snapshot, snapshot);
+  return { carregando: s.carregando, erro: s.erro };
 }

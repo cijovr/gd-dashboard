@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { useConcessionarias, fatorVigente } from "./data/tarifasStore";
+import { useConcessionarias, useSituacaoTarifas, fatorVigente, ID_ANTIGO } from "./data/tarifasStore";
 import { calcular, FIO_B_TRANSICAO } from "./data/calcular";
 import { FIO_B } from "./data/fioB";
 import {
@@ -235,7 +235,7 @@ export default function App() {
   const [endCliente,  setEndCliente]  = useState("");
 
   // Config
-  const [concId,    setConcId]    = useState("celpe");
+  const [concId,    setConcId]    = useState("neoenergia_pe");
   const [grupo,     setGrupo]     = useState("A4");
   const [modal,     setModal]     = useState("VERDE");
   const [consumoP,  setConsumoP]  = useState(3800);
@@ -260,6 +260,7 @@ export default function App() {
   const faixaFioB = FIO_B_TRANSICAO.find(f => f.ano === anoFioB) || FIO_B_TRANSICAO[FIO_B_TRANSICAO.length - 1];
 
   const CONCESSIONARIAS = useConcessionarias();
+  const situacaoTarifas = useSituacaoTarifas();
   const conc = useMemo(() => CONCESSIONARIAS.find(c => c.id === concId), [CONCESSIONARIAS, concId]);
 
   // Grupo B: modalidade convencional, consumo único, 1 crédito abate 1 kWh (sem fator de ponta)
@@ -419,6 +420,11 @@ export default function App() {
             ? <ConfigPage colors={colors} onChange={(c) => { setColors(c); applyColors(c); }}/>
             : (
               <div className="tab-content">
+                {situacaoTarifas.carregando ? (
+                <div className="sem-tarifa"><p>Carregando tarifas...</p></div>
+                ) : situacaoTarifas.erro ? (
+                <div className="sem-tarifa"><h2>Tarifas indisponíveis</h2><p>{situacaoTarifas.erro}</p></div>
+                ) : (
                 <div className="sem-tarifa">
                   <h2>Tarifas não cadastradas</h2>
                   <p>
@@ -431,6 +437,7 @@ export default function App() {
                     Ir para Configurações
                   </button>
                 </div>
+                )}
               </div>
             )}
         </main>
@@ -450,7 +457,7 @@ export default function App() {
 
   const aplicarInputs = (d) => {
     if (!d) return;
-    setConcId(d.concId); setGrupo(d.grupo); setModal(d.modal);
+    setConcId(ID_ANTIGO[d.concId] || d.concId); setGrupo(d.grupo); setModal(d.modal);
     setConsumoP(d.consumoP); setConsumoFP(d.consumoFP);
     if (d.consumoTotal != null) setConsumoTotal(d.consumoTotal);
     setDemP(d.demP); setDemFP(d.demFP);

@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { ChevronDown, Search, Save, Plus, Trash2, Eraser, Check, AlertTriangle } from "lucide-react";
 import {
-  useRegistros, tarifasStore, fatorCalculado, fatorVigente, temTarifa,
+  useRegistros, useSituacaoTarifas, tarifasStore, fatorCalculado, fatorVigente, temTarifa,
 } from "./data/tarifasStore";
 
 /* ── helpers ──────────────────────────────────────────────────── */
@@ -162,6 +162,7 @@ function CardConcessionaria({ registro, aberto, onToggle }) {
 /* ── página ───────────────────────────────────────────────────── */
 export default function TarifasPage() {
   const registros = useRegistros();
+  const { carregando, erro } = useSituacaoTarifas();
   const [busca, setBusca] = useState("");
   const [aberto, setAberto] = useState(null);
   const [nova, setNova] = useState({ nome: "", uf: "" });
@@ -189,10 +190,11 @@ export default function TarifasPage() {
   return (
     <div className="tcfg">
       <p className="tcfg-intro">
-        Digite as tarifas de cada concessionária. É daqui que a proposta e o faturamento da usina
-        puxam os valores quando você seleciona a concessionária. Energia em R$/MWh, demanda em R$/kW,
-        tarifas sem tributos.
+        Tarifas de cada distribuidora, guardadas no banco do dashboard. É daqui que a proposta e o
+        faturamento da usina puxam os valores quando você seleciona a concessionária. Energia em
+        R$/MWh, demanda em R$/kW, tarifas sem tributos.
       </p>
+      {erro && <div className="tcfg-vazio"><AlertTriangle size={13} /> {erro}</div>}
 
       <div className="tcfg-busca">
         <Search size={14} />
@@ -213,7 +215,7 @@ export default function TarifasPage() {
         </div>
       ))}
 
-      {grupos.length === 0 && <div className="tcfg-vazio">Nenhuma concessionária encontrada.</div>}
+      {grupos.length === 0 && <div className="tcfg-vazio">{carregando ? "Carregando tarifas..." : "Nenhuma concessionária encontrada."}</div>}
 
       <div className="tcfg-nova">
         <input placeholder="Nome da concessionária" value={nova.nome}
