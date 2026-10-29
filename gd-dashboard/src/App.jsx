@@ -743,8 +743,16 @@ export default function App() {
         </label>
         {gd2 && (<>
           <div className="gd2-campos">
-            {!grupoB && <NumInput label="Fio B Ponta (R$/MWh, sem tributos)" value={fioBPUsado} onChange={setFioBP} fmtFn={v=>fmtK(v)}/>}
-            <NumInput label={grupoB ? "Fio B (R$/MWh, sem tributos)" : "Fio B Fora Ponta (R$/MWh, sem tributos)"} value={fioBFPUsado} onChange={setFioBFP} fmtFn={v=>fmtK(v)}/>
+            {!grupoB && (
+              <div className="gd2-coluna">
+                <NumInput label="Fio B Ponta (R$/MWh, sem tributos)" value={fioBPUsado} onChange={setFioBP} fmtFn={v=>fmtK(v)}/>
+                <NumInput label="Fio B Ponta (R$/MWh, com tributos)" value={fioBPUsado * mult} readOnly fmtFn={v=>fmtK(v)}/>
+              </div>
+            )}
+            <div className="gd2-coluna">
+              <NumInput label={grupoB ? "Fio B (R$/MWh, sem tributos)" : "Fio B Fora Ponta (R$/MWh, sem tributos)"} value={fioBFPUsado} onChange={setFioBFP} fmtFn={v=>fmtK(v)}/>
+              <NumInput label={grupoB ? "Fio B (R$/MWh, com tributos)" : "Fio B Fora Ponta (R$/MWh, com tributos)"} value={fioBFPUsado * mult} readOnly fmtFn={v=>fmtK(v)}/>
+            </div>
             <div className="numinput-group">
               <label className="numinput-label">Ano de referência</label>
               <div className="select-wrap">
