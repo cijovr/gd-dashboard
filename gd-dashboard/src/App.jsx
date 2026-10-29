@@ -249,6 +249,7 @@ export default function App() {
   const [bandeira,  setBandeira]  = useState(0);
   const [tip,       setTip]       = useState(0);
   const [desconto,  setDesconto]  = useState(20);
+  const [gestao,    setGestao]    = useState(0);
 
   // GD II: Fio B não compensado (R$/MWh sem tributos, digitado) e ano da transição
   const anoAtual = Math.min(Math.max(new Date().getFullYear(), 2023), 2029);
@@ -329,7 +330,7 @@ export default function App() {
       te_p:  tar.te_p,
       te_fp: tar.te_fp,
       icms: icms/100, pis: pis/100, cofins: cofins/100,
-      bandeira, tip,
+      bandeira, tip, gestao,
       disponibilidade_kwh: 0,
       desconto_gd: desconto/100,
       fator_geracao: grupoB ? 1 : fatorVigente(conc),
@@ -339,7 +340,7 @@ export default function App() {
       fio_b_b3:  gd2 ? (FIO_B[concId]?.b3 ?? 0) / 1000 : 0,
     }, conc);
   }, [conc, grupo, grupoB, modal, consumoP, consumoFP, consumoTotal, demP, demFP, tar,
-      icms, pis, cofins, bandeira, tip, desconto, gd2, fioBPUsado, fioBFPUsado, faixaFioB, concId]);
+      icms, pis, cofins, bandeira, tip, gestao, desconto, gd2, fioBPUsado, fioBFPUsado, faixaFioB, concId]);
 
 
   // ── SIDEBAR CONTENT ──────────────────────────────────────────────────────────
@@ -403,6 +404,11 @@ export default function App() {
           <NumInput label="Desconto ao cliente (%)" value={desconto} onChange={setDesconto} fmtFn={v=>`${v}%`}/>
           <div className="desconto-info">Tarifa final: <strong>{r ? fmtN(r.tar_desconto_c_trib,6) : "—"} R$/kWh</strong></div>
         </div>
+        <div className="desconto-box gestao-box">
+          <div className="sb-section-title" style={{marginBottom:6}}><DollarSign size={11}/> Gestão</div>
+          <NumInput label="Valor da gestão (R$)" value={gestao} onChange={setGestao} fmtFn={v=>`R$ ${fmtK(v)}`}/>
+          <div className="desconto-info">Sem tributos. Entra na Fatura com GD.</div>
+        </div>
     </div>
   );
 
@@ -449,7 +455,7 @@ export default function App() {
   // ── Propostas salvas ────────────────────────────────────────────────────────
   const inputsAtuais = () => ({
     concId, grupo, modal, consumoP, consumoFP, consumoTotal, demP, demFP,
-    icms, pis, cofins, bandeira, tip, desconto,
+    icms, pis, cofins, bandeira, tip, desconto, gestao,
     gd2, fioBP, fioBFP, anoFioB,
     editTarifas, editTar,
     cliente: { nome: nomeCliente, cpf: cpfCliente, tel: telCliente, end: endCliente },
@@ -462,7 +468,7 @@ export default function App() {
     if (d.consumoTotal != null) setConsumoTotal(d.consumoTotal);
     setDemP(d.demP); setDemFP(d.demFP);
     setIcms(d.icms); setPis(d.pis); setCofins(d.cofins);
-    setBandeira(d.bandeira); setTip(d.tip); setDesconto(d.desconto);
+    setBandeira(d.bandeira); setTip(d.tip); setDesconto(d.desconto); setGestao(d.gestao || 0);
     setGd2(Boolean(d.gd2)); setFioBP(d.fioBP ?? null); setFioBFP(d.fioBFP ?? null);
     setAnoFioB(d.anoFioB || anoAtual);
     setEditTarifas(Boolean(d.editTarifas));
@@ -525,6 +531,7 @@ export default function App() {
     { label:"Demanda FP",           tarifa: fmtN(tar.tusd_dem_fp * mult,2), volume: `${demFP} kW`, valor: r.fg.dem_fp },
     { label:"Bandeira",             tarifa: fmtN(bandeira*mult,6),               volume: `${fmtK(cTot)} kWh`, valor: r.fg.bandeira },
     { label:"TIP",                  tarifa: "—",                            volume: "—",                      valor: r.fg.tip },
+    { label:"Gestão", tarifa: "—",                           volume: "—",                      valor: r.fg.gestao },
   ];
 
   const pieTributos = [

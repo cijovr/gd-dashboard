@@ -20,6 +20,7 @@ export function calcular(params, conc) {
     te_p, te_fp,
     icms, pis, cofins,
     bandeira, tip,
+    gestao = 0,
     disponibilidade_kwh,
     desconto_gd,
     fator_geracao: fator_informado,
@@ -86,8 +87,10 @@ export function calcular(params, conc) {
   const fg_disp    = fa_disp;
   const fg_bandeira= fa_bandeira;
   const fg_tip     = fa_tip;
+  // Gestão: valor fixo em R$, sem tributos, cobrado só na fatura com GD
+  const fg_gestao  = gestao;
   const subtotal_gd = fg_te_p + fg_te_fp + fg_tusd_p + fg_tusd_fp
-                    + fg_dem_p + fg_dem_fp + fg_disp + fg_bandeira + fg_tip;
+                    + fg_dem_p + fg_dem_fp + fg_disp + fg_bandeira + fg_tip + fg_gestao;
 
   const economia_total = subtotal_atual - subtotal_gd;
   const pct_economia   = subtotal_atual > 0 ? economia_total / subtotal_atual : 0;
@@ -126,7 +129,7 @@ export function calcular(params, conc) {
     fa: { te_p: fa_te_p, te_fp: fa_te_fp, tusd_p: fa_tusd_p, tusd_fp: fa_tusd_fp,
           dem_p: fa_dem_p, dem_fp: fa_dem_fp, disp: fa_disp, bandeira: fa_bandeira, tip: fa_tip, total: subtotal_atual },
     fg: { te_p: fg_te_p, te_fp: fg_te_fp, tusd_p: fg_tusd_p, tusd_fp: fg_tusd_fp,
-          dem_p: fg_dem_p, dem_fp: fg_dem_fp, disp: fg_disp, bandeira: fg_bandeira, tip: fg_tip, total: subtotal_gd },
+          dem_p: fg_dem_p, dem_fp: fg_dem_fp, disp: fg_disp, bandeira: fg_bandeira, tip: fg_tip, gestao: fg_gestao, total: subtotal_gd },
     economia_total, pct_economia,
     tributos: { base: base_sem_trib, pis: valor_pis, cofins: valor_cofins, icms: valor_icms },
     usina: { receita_mensal, receita_anual, custo_oport_mensal, custo_oport_anual,
