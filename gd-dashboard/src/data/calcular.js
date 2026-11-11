@@ -23,6 +23,7 @@ export function calcular(params, conc) {
     gestao = 0,
     disponibilidade_kwh,
     desconto_gd,
+    desconto_cheia = 0,
     fator_geracao: fator_informado,
     fio_b_p = 0, fio_b_fp = 0, fio_b_pct = 0, fio_b_b3 = 0,
   } = params;
@@ -119,7 +120,7 @@ export function calcular(params, conc) {
   const liquido_b3_mensal    = receita_b3_mensal - custo_fio_b_b3_mensal;
   const dif_a4_vs_b3         = resultado_liquido_mensal - liquido_b3_mensal;
 
-  return {
+  const out = {
     tar_total_p, tar_total_fp,
     tar_total_p_trib:  tar_total_p  * mult,
     tar_total_fp_trib: tar_total_fp * mult,
@@ -138,4 +139,47 @@ export function calcular(params, conc) {
              geracao_b3, tar_b3_c_desc_c_trib, receita_b3_mensal, receita_b3_anual,
              custo_fio_b_b3_mensal, liquido_b3_mensal, dif_a4_vs_b3 },
   };
+
+  // Desconto na fatura cheia (TUSD + TE + demanda + iluminação pública).
+  // Os créditos só abatem a energia: demanda e iluminação o cliente segue pagando cheias
+  // à distribuidora. Para o total cair d%, o usineiro cobra menos pela energia:
+  // recebe energia × (1 − d_equiv), com d_equiv = d × fatura atual ÷ energia.
+  if (desconto_cheia > 0) {
+    const d = desconto_cheia;
+    const energia_trib = fa_te_p + fa_te_fp + fa_tusd_p + fa_tusd_fp + fa_disp;
+    const nao_energia  = subtotal_atual - energia_trib;   // demanda, iluminação, bandeira
+    const desconto_equivalente = energia_trib > 0 ? d * subtotal_atual / energia_trib : 0;
+    const eq = calcular({ ...params, desconto_gd: desconto_equivalente, desconto_cheia: 0 }, conc);
+
+    const fc = {};
+    for (const k of ["te_p", "te_fp", "tusd_p", "tusd_fp", "dem_p", "dem_fp", "disp", "bandeira", "tip"])
+      fc[k] = out.fa[k] * (1 - d);
+    fc.gestao = gestao;
+    fc.total  = subtotal_atual * (1 - d) + gestao;
+
+    // Demanda em R$/kWh: o valor da demanda no mês dividido pela energia do mês.
+    // Equivale a R$/kW ÷ (730 h × fator de carga), com fator de carga = kWh ÷ (kW × 730 h).
+    const consumo_total = consumo_p + consumo_fp;
+    const dem_kw        = Math.max(dem_p || 0, dem_fp || 0);
+    const demanda_rs    = fa_dem_p + fa_dem_fp;
+
+    out.cheia = {
+      desconto: d,
+      desconto_equivalente,
+      fc,
+      economia_total: subtotal_atual - fc.total,
+      pct_economia: subtotal_atual > 0 ? (subtotal_atual - fc.total) / subtotal_atual : 0,
+      energia_trib, nao_energia,
+      // O que o usineiro dá de desconto sobre itens que não recebe (demanda, iluminação)
+      custo_extra_mensal: d * nao_energia,
+      custo_extra_kwh: consumo_total > 0 ? d * nao_energia / consumo_total : 0,
+      demanda_rs,
+      demanda_rs_kwh: consumo_total > 0 ? demanda_rs / consumo_total : 0,
+      horas_mes: 730,
+      fator_carga: dem_kw > 0 ? consumo_total / (dem_kw * 730) : 0,
+      tar_cheia_c_trib: consumo_total > 0 ? eq.usina.receita_mensal / consumo_total : 0,
+      usina: eq.usina,
+    };
+  }
+  return out;
 }

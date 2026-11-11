@@ -250,6 +250,9 @@ export default function App() {
   const [tip,       setTip]       = useState(0);
   const [desconto,  setDesconto]  = useState(20);
   const [gestao,    setGestao]    = useState(0);
+  // Terceiro comparativo (só Grupo A): desconto sobre a fatura inteira
+  const [faturaCheia,   setFaturaCheia]   = useState(false);
+  const [descontoCheia, setDescontoCheia] = useState(0);
 
   // GD II: Fio B não compensado (R$/MWh sem tributos, digitado) e ano da transição
   const anoAtual = Math.min(Math.max(new Date().getFullYear(), 2023), 2029);
@@ -266,6 +269,10 @@ export default function App() {
 
   // Grupo B: modalidade convencional, consumo único, 1 crédito abate 1 kWh (sem fator de ponta)
   const grupoB = grupo === "B";
+  // Box marcada mostra o campo; o comparativo só sai com um desconto digitado (campo obrigatório)
+  const mostrarCheia = !grupoB && faturaCheia;
+  const faltaDescontoCheia = mostrarCheia && !(descontoCheia > 0);
+  const cheiaAtiva = mostrarCheia && descontoCheia > 0;
   const escolherGrupo = (g) => {
     setGrupo(g);
     if (g === "B") setModal("CONVENCIONAL");
@@ -333,6 +340,7 @@ export default function App() {
       bandeira, tip, gestao,
       disponibilidade_kwh: 0,
       desconto_gd: desconto/100,
+      desconto_cheia: cheiaAtiva ? descontoCheia/100 : 0,
       fator_geracao: grupoB ? 1 : fatorVigente(conc),
       fio_b_p:   gd2 && !grupoB ? fioBPUsado / 1000 : 0,
       fio_b_fp:  gd2 ? fioBFPUsado / 1000 : 0,
@@ -340,7 +348,7 @@ export default function App() {
       fio_b_b3:  gd2 ? (FIO_B[concId]?.b3 ?? 0) / 1000 : 0,
     }, conc);
   }, [conc, grupo, grupoB, modal, consumoP, consumoFP, consumoTotal, demP, demFP, tar,
-      icms, pis, cofins, bandeira, tip, gestao, desconto, gd2, fioBPUsado, fioBFPUsado, faixaFioB, concId]);
+      icms, pis, cofins, bandeira, tip, gestao, desconto, cheiaAtiva, descontoCheia, gd2, fioBPUsado, fioBFPUsado, faixaFioB, concId]);
 
 
   // ── SIDEBAR CONTENT ──────────────────────────────────────────────────────────
@@ -375,6 +383,12 @@ export default function App() {
             </div>
           </div>
         </div>
+        {!grupoB && (
+          <label className="gd2-check cheia-check">
+            <input type="checkbox" checked={faturaCheia} onChange={e => setFaturaCheia(e.target.checked)}/>
+            <span>Comparar desconto na fatura cheia (TUSD + TE + demanda + iluminação pública)</span>
+          </label>
+        )}
         <div className="divider"/>
         <div className="sb-section-title"><Gauge size={11}/> {grupoB ? "Consumo" : "Consumo & Demanda"}</div>
         {grupoB ? (
@@ -403,6 +417,12 @@ export default function App() {
           <div className="sb-section-title" style={{marginBottom:6}}><Leaf size={11}/> Desconto GD</div>
           <NumInput label="Desconto ao cliente (%)" value={desconto} onChange={setDesconto} fmtFn={v=>`${v}%`}/>
           <div className="desconto-info">Tarifa final: <strong>{r ? fmtN(r.tar_desconto_c_trib,6) : "—"} R$/kWh</strong></div>
+          {mostrarCheia && (<>
+            <NumInput label="Desconto ao cliente fatura cheia (%)" value={descontoCheia} onChange={setDescontoCheia} fmtFn={v=>`${v}%`}/>
+            {faltaDescontoCheia
+              ? <div className="campo-erro">Digite o desconto da fatura cheia para ver o comparativo.</div>
+              : <div className="desconto-info">Equivale a <strong>{r?.cheia ? fmtN(r.cheia.desconto_equivalente*100,2) + "%" : "—"}</strong> só na TUSD + TE</div>}
+          </>)}
         </div>
         <div className="desconto-box gestao-box">
           <div className="sb-section-title" style={{marginBottom:6}}><DollarSign size={11}/> Gestão</div>
@@ -455,7 +475,7 @@ export default function App() {
   // ── Propostas salvas ────────────────────────────────────────────────────────
   const inputsAtuais = () => ({
     concId, grupo, modal, consumoP, consumoFP, consumoTotal, demP, demFP,
-    icms, pis, cofins, bandeira, tip, desconto, gestao,
+    icms, pis, cofins, bandeira, tip, desconto, gestao, faturaCheia, descontoCheia,
     gd2, fioBP, fioBFP, anoFioB,
     editTarifas, editTar,
     cliente: { nome: nomeCliente, cpf: cpfCliente, tel: telCliente, end: endCliente },
@@ -469,6 +489,7 @@ export default function App() {
     setDemP(d.demP); setDemFP(d.demFP);
     setIcms(d.icms); setPis(d.pis); setCofins(d.cofins);
     setBandeira(d.bandeira); setTip(d.tip); setDesconto(d.desconto); setGestao(d.gestao || 0);
+    setFaturaCheia(Boolean(d.faturaCheia)); setDescontoCheia(d.descontoCheia || 0);
     setGd2(Boolean(d.gd2)); setFioBP(d.fioBP ?? null); setFioBFP(d.fioBFP ?? null);
     setAnoFioB(d.anoFioB || anoAtual);
     setEditTarifas(Boolean(d.editTarifas));
@@ -533,6 +554,25 @@ export default function App() {
     { label:"TIP",                  tarifa: "—",                            volume: "—",                      valor: r.fg.tip },
     { label:"Gestão", tarifa: "—",                           volume: "—",                      valor: r.fg.gestao },
   ];
+
+  // Rows fatura cheia: todos os itens da fatura atual com o mesmo desconto, mais a gestão
+  const ch = r.cheia;
+  const kCheia = ch ? 1 - ch.desconto : 1;
+  const rowsCheia = ch ? [
+    { label:"TE Ponta",             tarifa: fmtN(tar.te_p*mult*kCheia,6),         volume: `${fmtK(cP)} kWh`,  valor: ch.fc.te_p },
+    { label:"TE Fora Ponta",        tarifa: fmtN(tar.te_fp*mult*kCheia,6),        volume: `${fmtK(cFP)} kWh`, valor: ch.fc.te_fp },
+    { label:"TUSD Cons. Ponta",     tarifa: fmtN(tar.tusd_cons_p*mult*kCheia,6),  volume: `${fmtK(cP)} kWh`,  valor: ch.fc.tusd_p },
+    { label:"TUSD Cons. FP",        tarifa: fmtN(tar.tusd_cons_fp*mult*kCheia,6), volume: `${fmtK(cFP)} kWh`, valor: ch.fc.tusd_fp },
+    { label:"Demanda Ponta",        tarifa: fmtN(tar.tusd_dem_p*mult*kCheia,2),   volume: `${demP} kW`,  valor: ch.fc.dem_p },
+    { label:"Demanda FP",           tarifa: fmtN(tar.tusd_dem_fp*mult*kCheia,2),  volume: `${demFP} kW`, valor: ch.fc.dem_fp },
+    { label:"Bandeira",             tarifa: fmtN(bandeira*mult*kCheia,6),         volume: `${fmtK(cTot)} kWh`, valor: ch.fc.bandeira },
+    { label:"TIP",                  tarifa: "—",                                  volume: "—",                 valor: ch.fc.tip },
+    { label:"Gestão",               tarifa: "—",                                  volume: "—",                 valor: ch.fc.gestao },
+  ] : [];
+  // Qual das duas opções dá mais desconto em R$ ao cliente
+  const difCheia = ch ? ch.economia_total - r.economia_total : 0;
+  // E qual rende mais para a usina (líquido mensal)
+  const difUsina = ch ? ch.usina.resultado_liquido_mensal - r.usina.resultado_liquido_mensal : 0;
 
   const pieTributos = [
     { name:"PIS",    value: r.tributos.pis,    fill:"#f59e0b" },
@@ -657,7 +697,7 @@ export default function App() {
       </div>
 
       {/* Faturas lado a lado */}
-      <div className="faturas-comparativo">
+      <div className={`faturas-comparativo ${ch ? "faturas-tres" : ""}`}>
         <FaturaDetalhada title="Fatura Atual" colorClass="fatura-atual-card"
           rows={rowsAtual} total={r.fa.total} badge="Sem GD" badgeClass="badge-neutro"/>
         <div className="faturas-seta">
@@ -665,7 +705,35 @@ export default function App() {
         </div>
         <FaturaDetalhada title="Fatura com GD" colorClass="fatura-gd-card"
           rows={rowsGD} total={r.fg.total} badge={`${desconto}% desconto`} badgeClass="badge-green"/>
+        {ch && (
+          <FaturaDetalhada title="Fatura com GD — fatura cheia" colorClass="fatura-gd-card fatura-cheia-card"
+            rows={rowsCheia} total={ch.fc.total} badge={`${descontoCheia}% na fatura toda`} badgeClass="badge-green"/>
+        )}
       </div>
+
+      {ch && (
+        <div className="cheia-comparativo">
+          <div className="cheia-titulo">Qual desconto rende mais ao cliente?</div>
+          <div className="cheia-opcoes">
+            <div className={`cheia-opcao ${difCheia <= 0 ? "cheia-vence" : ""}`}>
+              <div className="cheia-opcao-label">{desconto}% só na TUSD + TE</div>
+              <div className="cheia-opcao-valor">{fmt(r.economia_total)}<span>/mês</span></div>
+              <div className="cheia-opcao-sub">{fmtP(r.pct_economia)} da fatura · {fmt(r.economia_total*12)} em 12 meses</div>
+            </div>
+            <div className={`cheia-opcao ${difCheia > 0 ? "cheia-vence" : ""}`}>
+              <div className="cheia-opcao-label">{descontoCheia}% na fatura cheia</div>
+              <div className="cheia-opcao-valor">{fmt(ch.economia_total)}<span>/mês</span></div>
+              <div className="cheia-opcao-sub">{fmtP(ch.pct_economia)} da fatura · {fmt(ch.economia_total*12)} em 12 meses</div>
+            </div>
+          </div>
+          <div className="cheia-veredito">
+            {Math.abs(difCheia) < 0.01
+              ? <>As duas opções dão o mesmo desconto.</>
+              : <><strong>{difCheia > 0 ? `${descontoCheia}% na fatura cheia` : `${desconto}% só na TUSD + TE`}</strong> dá <strong>{fmt(Math.abs(difCheia))}/mês</strong> a mais de desconto ({fmt(Math.abs(difCheia)*12)} em 12 meses).</>}
+            {" "}{descontoCheia}% na fatura cheia equivale a {fmtN(ch.desconto_equivalente*100,2)}% só na TUSD + TE.
+          </div>
+        </div>
+      )}
 
       {/* Economia abaixo do comparativo */}
       <div className="economia-destaque">
@@ -836,6 +904,45 @@ export default function App() {
           </div>
         </Section>
       </div>
+
+      {ch && (
+        <Section title={`Desconto na fatura cheia (${descontoCheia}%) — custo para a usina`}>
+          <div className="usina-full-grid cheia-usina">
+            <div className="usina-bloco" style={{borderColor:"rgba(245,166,35,0.3)"}}>
+              <div className="usina-row"><span>Demanda no mês (c/ tributos)</span><strong>{fmt(ch.demanda_rs)}</strong></div>
+              <div className="usina-row"><span>Demanda em R$/kWh</span><strong>{fmtN(ch.demanda_rs_kwh,6)} R$/kWh</strong></div>
+              <div className="usina-info"><Info size={11}/> A demanda é cobrada em R$/kW. Para levar a R$/kWh: {fmt(ch.demanda_rs)} ÷ {fmtK(cTot)} kWh do mês. É o mesmo que R$/kW ÷ (730 h × fator de carga), com fator de carga = kWh ÷ (kW × 730 h) = {fmtN(ch.fator_carga*100,1)}%.</div>
+              {ch.nao_energia - ch.demanda_rs > 0.01 && (
+                <div className="usina-row"><span>Iluminação pública em R$/kWh</span><strong>{fmtN((ch.nao_energia - ch.demanda_rs)/(cTot||1),6)} R$/kWh</strong></div>
+              )}
+              <div className="usina-row usina-row-total"><span>Desconto dado na demanda e iluminação ({descontoCheia}%)</span><strong style={{color:"var(--warn)"}}>{fmt(ch.custo_extra_mensal)}/mês</strong></div>
+              <div className="usina-row usina-row-total"><span>Custo a mais para a usina</span><strong style={{color:"var(--warn)"}}>{fmtN(ch.custo_extra_kwh,6)} R$/kWh</strong></div>
+              <div className="usina-info"><Info size={11}/> Os créditos só abatem a energia. Demanda e iluminação o cliente segue pagando cheias à distribuidora, então o desconto sobre elas sai da tarifa que a usina cobra: {descontoCheia}% na fatura cheia = {fmtN(ch.desconto_equivalente*100,2)}% só na TUSD + TE.</div>
+            </div>
+            <table className="gd2-tabela cheia-tabela">
+              <thead>
+                <tr><th>Usina</th><th>{desconto}% TUSD + TE</th><th>{descontoCheia}% fatura cheia</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>Tarifa recebida (c/ tributos)</td><td>{fmtN(r.tar_desconto_c_trib,6)}</td><td>{fmtN(ch.tar_cheia_c_trib,6)}</td></tr>
+                <tr><td>Receita bruta</td><td>{fmt(r.usina.receita_mensal)}</td><td>{fmt(ch.usina.receita_mensal)}</td></tr>
+                <tr><td>(−) Custo oportunidade</td><td>{fmt(r.usina.custo_oport_mensal)}</td><td>{fmt(ch.usina.custo_oport_mensal)}</td></tr>
+                {gd2 && <tr><td>(−) Fio B GD II</td><td>{fmt(r.usina.custo_fio_b_mensal)}</td><td>{fmt(ch.usina.custo_fio_b_mensal)}</td></tr>}
+                <tr className="gd2-ativo"><td>Líquido mensal</td><td>{fmt(r.usina.resultado_liquido_mensal)}</td><td>{fmt(ch.usina.resultado_liquido_mensal)}</td></tr>
+                <tr><td>Líquido anual</td><td>{fmt(r.usina.resultado_liquido_anual)}</td><td>{fmt(ch.usina.resultado_liquido_anual)}</td></tr>
+                <tr><td>Tarifa líquida (R$/kWh injetado)</td><td>{fmtN(tarLiquidaUsina,6)}</td><td>{fmtN(kwhInjetados > 0 ? ch.usina.resultado_liquido_mensal / kwhInjetados : 0,6)}</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div className={`comparativo-dif ${difUsina >= 0 ? "dif-pos" : "dif-neg"}`}>
+            {Math.abs(difUsina) < 0.01 ? "As duas opções rendem o mesmo para a usina" : <>
+              {descontoCheia}% na fatura cheia {difUsina < 0 ? "custa à usina " : "rende à usina "}
+              <strong>{fmt(Math.abs(difUsina))}/mês</strong>
+              {` a mais que ${desconto}% só na TUSD + TE`}
+            </>}
+          </div>
+        </Section>
+      )}
 
       <Section title="Comparativo Visual — Mensal">
         <ResponsiveContainer width="100%" height={200}>
