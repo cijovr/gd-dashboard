@@ -170,6 +170,8 @@ export function calcular(params, conc) {
       economia_total: subtotal_atual - fc.total,
       pct_economia: subtotal_atual > 0 ? (subtotal_atual - fc.total) / subtotal_atual : 0,
       energia_trib, nao_energia,
+      // Peso de TUSD + TE na fatura: x% só na energia = x% × peso da fatura toda
+      peso_energia: subtotal_atual > 0 ? energia_trib / subtotal_atual : 0,
       // O que o usineiro dá de desconto sobre itens que não recebe (demanda, iluminação)
       custo_extra_mensal: d * nao_energia,
       custo_extra_kwh: consumo_total > 0 ? d * nao_energia / consumo_total : 0,

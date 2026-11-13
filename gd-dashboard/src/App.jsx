@@ -421,7 +421,12 @@ export default function App() {
             <NumInput label="Desconto ao cliente fatura cheia (%)" value={descontoCheia} onChange={setDescontoCheia} fmtFn={v=>`${v}%`}/>
             {faltaDescontoCheia
               ? <div className="campo-erro">Digite o desconto da fatura cheia para ver o comparativo.</div>
-              : <div className="desconto-info">Equivale a <strong>{r?.cheia ? fmtN(r.cheia.desconto_equivalente*100,2) + "%" : "—"}</strong> só na TUSD + TE</div>}
+              : r?.cheia && (
+                <div className="desconto-info cheia-regua">
+                  <span>{desconto}% só na TUSD + TE = <strong>{fmtN(desconto*r.cheia.peso_energia,2)}%</strong> da fatura toda</span>
+                  <span>{descontoCheia}% na fatura cheia = <strong>{fmtN(r.cheia.desconto_equivalente*100,2)}%</strong> só na TUSD + TE</span>
+                </div>
+              )}
           </>)}
         </div>
         <div className="desconto-box gestao-box">
@@ -730,7 +735,7 @@ export default function App() {
             {Math.abs(difCheia) < 0.01
               ? <>As duas opções dão o mesmo desconto.</>
               : <><strong>{difCheia > 0 ? `${descontoCheia}% na fatura cheia` : `${desconto}% só na TUSD + TE`}</strong> dá <strong>{fmt(Math.abs(difCheia))}/mês</strong> a mais de desconto ({fmt(Math.abs(difCheia)*12)} em 12 meses).</>}
-            {" "}{descontoCheia}% na fatura cheia equivale a {fmtN(ch.desconto_equivalente*100,2)}% só na TUSD + TE.
+            {" "}Na mesma régua: {desconto}% só na TUSD + TE = {fmtN(desconto*ch.peso_energia,2)}% da fatura toda; {descontoCheia}% na fatura cheia = {fmtN(ch.desconto_equivalente*100,2)}% só na TUSD + TE.
           </div>
         </div>
       )}

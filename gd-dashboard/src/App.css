@@ -671,3 +671,4 @@ body { background: var(--bg); color: var(--text); -webkit-font-smoothing: antial
   .cheia-opcoes { grid-template-columns: 1fr 1fr !important; }
   .cheia-check input { display: none; }
 }
+.cheia-regua { display: flex; flex-direction: column; gap: 3px; }
