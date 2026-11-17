@@ -99,8 +99,8 @@ function FaturaDetalhada({ title, colorClass, rows, total, badge, badgeClass }) 
         <thead className="fatura-table-head">
           <tr>
             <th style={{textAlign:"left"}}>Item</th>
-            <th>Tarifa c/ tributos (R$/kWh ou kW)</th>
             <th>Volume</th>
+            <th className="col-tarifa">Tarifa c/ tributos (R$/kWh ou kW)</th>
             <th>Valor</th>
           </tr>
         </thead>
@@ -108,8 +108,8 @@ function FaturaDetalhada({ title, colorClass, rows, total, badge, badgeClass }) 
           {rows.filter(r => r.valor > 0.01).map((r, i) => (
             <tr key={i} className="fatura-tr">
               <td>{r.label}</td>
-              <td className="td-tar">{r.tarifa}</td>
               <td className="td-vol">{r.volume}</td>
+              <td className="td-tar">{r.tarifa}</td>
               <td className="td-val">{fmt(r.valor)}</td>
             </tr>
           ))}
@@ -250,6 +250,8 @@ export default function App() {
   const [tip,       setTip]       = useState(0);
   const [desconto,  setDesconto]  = useState(20);
   const [gestao,    setGestao]    = useState(0);
+  // Grupo B: consumo mínimo (disponibilidade) em kWh, pago cheio mesmo com GD
+  const [dispKwh,   setDispKwh]   = useState(100);
   // Terceiro comparativo (só Grupo A): desconto sobre a fatura inteira
   const [faturaCheia,   setFaturaCheia]   = useState(false);
   const [descontoCheia, setDescontoCheia] = useState(0);
@@ -338,7 +340,7 @@ export default function App() {
       te_fp: tar.te_fp,
       icms: icms/100, pis: pis/100, cofins: cofins/100,
       bandeira, tip, gestao,
-      disponibilidade_kwh: 0,
+      disponibilidade_kwh: dispKwh,
       desconto_gd: desconto/100,
       desconto_cheia: cheiaAtiva ? descontoCheia/100 : 0,
       fator_geracao: grupoB ? 1 : fatorVigente(conc),
@@ -348,7 +350,7 @@ export default function App() {
       fio_b_b3:  gd2 ? (FIO_B[concId]?.b3 ?? 0) / 1000 : 0,
     }, conc);
   }, [conc, grupo, grupoB, modal, consumoP, consumoFP, consumoTotal, demP, demFP, tar,
-      icms, pis, cofins, bandeira, tip, gestao, desconto, cheiaAtiva, descontoCheia, gd2, fioBPUsado, fioBFPUsado, faixaFioB, concId]);
+      icms, pis, cofins, bandeira, tip, gestao, dispKwh, desconto, cheiaAtiva, descontoCheia, gd2, fioBPUsado, fioBFPUsado, faixaFioB, concId]);
 
 
   // ── SIDEBAR CONTENT ──────────────────────────────────────────────────────────
@@ -391,9 +393,9 @@ export default function App() {
         )}
         <div className="divider"/>
         <div className="sb-section-title"><Gauge size={11}/> {grupoB ? "Consumo" : "Consumo & Demanda"}</div>
-        {grupoB ? (
+        {grupoB ? (<>
           <NumInput label="Consumo Total (kWh)" value={consumoTotal} onChange={setConsumoTotal} unit=" kWh"/>
-        ) : (<>
+        </>) : (<>
           <NumInput label="Consumo Ponta (kWh)" value={consumoP} onChange={setConsumoP} unit=" kWh"/>
           <NumInput label="Consumo Fora Ponta (kWh)" value={consumoFP} onChange={setConsumoFP} unit=" kWh"/>
           <div className="row-2">
@@ -401,6 +403,7 @@ export default function App() {
             <NumInput label="Demanda Ponta (kW)" value={demP} onChange={setDemP} unit=" kW"/>
           </div>
         </>)}
+        <NumInput label="Consumo mínimo (disponibilidade, kWh)" value={dispKwh} onChange={setDispKwh} unit=" kWh"/>
         <div className="divider"/>
         <div className="sb-section-title"><Gauge size={11}/> Tributos</div>
         <div className="row-2">
@@ -480,7 +483,7 @@ export default function App() {
   // ── Propostas salvas ────────────────────────────────────────────────────────
   const inputsAtuais = () => ({
     concId, grupo, modal, consumoP, consumoFP, consumoTotal, demP, demFP,
-    icms, pis, cofins, bandeira, tip, desconto, gestao, faturaCheia, descontoCheia,
+    icms, pis, cofins, bandeira, tip, desconto, gestao, dispKwh, faturaCheia, descontoCheia,
     gd2, fioBP, fioBFP, anoFioB,
     editTarifas, editTar,
     cliente: { nome: nomeCliente, cpf: cpfCliente, tel: telCliente, end: endCliente },
@@ -493,7 +496,7 @@ export default function App() {
     if (d.consumoTotal != null) setConsumoTotal(d.consumoTotal);
     setDemP(d.demP); setDemFP(d.demFP);
     setIcms(d.icms); setPis(d.pis); setCofins(d.cofins);
-    setBandeira(d.bandeira); setTip(d.tip); setDesconto(d.desconto); setGestao(d.gestao || 0);
+    setBandeira(d.bandeira); setTip(d.tip); setDesconto(d.desconto); setGestao(d.gestao || 0); setDispKwh(d.dispKwh ?? 100);
     setFaturaCheia(Boolean(d.faturaCheia)); setDescontoCheia(d.descontoCheia || 0);
     setGd2(Boolean(d.gd2)); setFioBP(d.fioBP ?? null); setFioBFP(d.fioBFP ?? null);
     setAnoFioB(d.anoFioB || anoAtual);
@@ -533,6 +536,11 @@ export default function App() {
   const cP   = grupoB ? 0 : consumoP;
   const cFP  = grupoB ? consumoTotal : consumoFP;
   const cTot = cP + cFP;
+  // Consumo mínimo (só Grupo B): sai da energia compensável e vira linha própria, cobrada cheia
+  const cDisp  = r.disp_kwh;
+  const cFPEf  = cFP - cDisp;
+  const tarDispTrib = (tar.tusd_cons_fp + tar.te_fp) * mult;
+  const linhaDisp = (valor, fator = 1) => ({ label:"Consumo mínimo (disponibilidade)", tarifa: fmtN(tarDispTrib*fator,6), volume: `${fmtK(cDisp)} kWh`, valor });
 
   // Rows fatura atual
   const rowsAtual = [
@@ -550,9 +558,10 @@ export default function App() {
   const ratio = r.tar_desconto / r.tar_media;
   const rowsGD = [
     { label:"TE Ponta",             tarifa: fmtN(tar.te_p*ratio*mult,6),         volume: `${fmtK(cP)} kWh`,  valor: r.fg.te_p },
-    { label: grupoB ? "TE" : "TE Fora Ponta", tarifa: fmtN(tar.te_fp*ratio*mult,6),        volume: `${fmtK(cFP)} kWh`, valor: r.fg.te_fp },
+    { label: grupoB ? "TE" : "TE Fora Ponta", tarifa: fmtN(tar.te_fp*ratio*mult,6),        volume: `${fmtK(cFPEf)} kWh`, valor: r.fg.te_fp },
     { label:"TUSD Cons. Ponta",     tarifa: fmtN(tar.tusd_cons_p*ratio*mult,6),  volume: `${fmtK(cP)} kWh`,  valor: r.fg.tusd_p },
-    { label: grupoB ? "TUSD" : "TUSD Cons. FP", tarifa: fmtN(tar.tusd_cons_fp*ratio*mult,6), volume: `${fmtK(cFP)} kWh`, valor: r.fg.tusd_fp },
+    { label: grupoB ? "TUSD" : "TUSD Cons. FP", tarifa: fmtN(tar.tusd_cons_fp*ratio*mult,6), volume: `${fmtK(cFPEf)} kWh`, valor: r.fg.tusd_fp },
+    linhaDisp(r.fg.disp),
     { label:"Demanda Ponta",        tarifa: fmtN(tar.tusd_dem_p * mult,2),  volume: `${demP} kW`,  valor: r.fg.dem_p },
     { label:"Demanda FP",           tarifa: fmtN(tar.tusd_dem_fp * mult,2), volume: `${demFP} kW`, valor: r.fg.dem_fp },
     { label:"Bandeira",             tarifa: fmtN(bandeira*mult,6),               volume: `${fmtK(cTot)} kWh`, valor: r.fg.bandeira },
@@ -565,9 +574,10 @@ export default function App() {
   const kCheia = ch ? 1 - ch.desconto : 1;
   const rowsCheia = ch ? [
     { label:"TE Ponta",             tarifa: fmtN(tar.te_p*mult*kCheia,6),         volume: `${fmtK(cP)} kWh`,  valor: ch.fc.te_p },
-    { label:"TE Fora Ponta",        tarifa: fmtN(tar.te_fp*mult*kCheia,6),        volume: `${fmtK(cFP)} kWh`, valor: ch.fc.te_fp },
+    { label:"TE Fora Ponta",        tarifa: fmtN(tar.te_fp*mult*kCheia,6),        volume: `${fmtK(cFPEf)} kWh`, valor: ch.fc.te_fp },
     { label:"TUSD Cons. Ponta",     tarifa: fmtN(tar.tusd_cons_p*mult*kCheia,6),  volume: `${fmtK(cP)} kWh`,  valor: ch.fc.tusd_p },
-    { label:"TUSD Cons. FP",        tarifa: fmtN(tar.tusd_cons_fp*mult*kCheia,6), volume: `${fmtK(cFP)} kWh`, valor: ch.fc.tusd_fp },
+    { label:"TUSD Cons. FP",        tarifa: fmtN(tar.tusd_cons_fp*mult*kCheia,6), volume: `${fmtK(cFPEf)} kWh`, valor: ch.fc.tusd_fp },
+    linhaDisp(ch.fc.disp, kCheia),
     { label:"Demanda Ponta",        tarifa: fmtN(tar.tusd_dem_p*mult*kCheia,2),   volume: `${demP} kW`,  valor: ch.fc.dem_p },
     { label:"Demanda FP",           tarifa: fmtN(tar.tusd_dem_fp*mult*kCheia,2),  volume: `${demFP} kW`, valor: ch.fc.dem_fp },
     { label:"Bandeira",             tarifa: fmtN(bandeira*mult*kCheia,6),         volume: `${fmtK(cTot)} kWh`, valor: ch.fc.bandeira },
@@ -595,7 +605,7 @@ export default function App() {
 
   // Tarifa líquida da usina: receita da energia compensada menos o custo dos kWh extras,
   // dividida por tudo o que a usina injetou (compensado + extra)
-  const kwhInjetados    = cTot + r.kwh_extra;
+  const kwhInjetados    = r.kwh_compensados + r.kwh_extra;
   const tarLiquidaUsina = kwhInjetados > 0 ? r.usina.resultado_liquido_mensal / kwhInjetados : 0;
 
   // ── Bloco editar tarifas ──────────────────────────────────────────────────────
@@ -883,7 +893,7 @@ export default function App() {
       <div className="usina-full-grid">
         <Section title={`Receita — Cliente ${grupo}`}>
           <div className="usina-bloco">
-            <div className="usina-row"><span>Energia compensada</span><strong>{fmtK(cTot)} kWh</strong></div>
+            <div className="usina-row"><span>Energia compensada</span><strong>{fmtK(r.kwh_compensados)} kWh</strong></div>
             <div className="usina-row"><span>Tarifa c/ desc COM tributos</span><strong>{fmtN(r.tar_desconto_c_trib,6)} R$/kWh</strong></div>
             <div className="usina-row usina-row-total"><span>Receita bruta mensal</span><strong>{fmt(r.usina.receita_mensal)}</strong></div>
             <div className="usina-row usina-row-total"><span>Receita bruta anual</span><strong>{fmt(r.usina.receita_anual)}</strong></div>
@@ -905,7 +915,7 @@ export default function App() {
             <div className="usina-row usina-row-total highlight"><span>Líquido mensal</span><strong>{fmt(r.usina.resultado_liquido_mensal)}</strong></div>
             <div className="usina-row usina-row-total highlight"><span>Líquido anual</span><strong>{fmt(r.usina.resultado_liquido_anual)}</strong></div>
             <div className="usina-row usina-row-total"><span>Tarifa líquida</span><strong>{fmtN(tarLiquidaUsina,6)} R$/kWh</strong></div>
-            <div className="usina-info"><Info size={11}/> {fmt(r.usina.resultado_liquido_mensal)} ÷ {fmtK(kwhInjetados)} kWh injetados ({fmtK(cTot)} compensados + {fmtK(r.kwh_extra)} extra)</div>
+            <div className="usina-info"><Info size={11}/> {fmt(r.usina.resultado_liquido_mensal)} ÷ {fmtK(kwhInjetados)} kWh injetados ({fmtK(r.kwh_compensados)} compensados + {fmtK(r.kwh_extra)} extra)</div>
           </div>
         </Section>
       </div>
@@ -920,9 +930,9 @@ export default function App() {
               {ch.nao_energia - ch.demanda_rs > 0.01 && (
                 <div className="usina-row"><span>Iluminação pública em R$/kWh</span><strong>{fmtN((ch.nao_energia - ch.demanda_rs)/(cTot||1),6)} R$/kWh</strong></div>
               )}
-              <div className="usina-row usina-row-total"><span>Desconto dado na demanda e iluminação ({descontoCheia}%)</span><strong style={{color:"var(--warn)"}}>{fmt(ch.custo_extra_mensal)}/mês</strong></div>
+              <div className="usina-row usina-row-total"><span>Desconto dado na demanda, iluminação e consumo mínimo ({descontoCheia}%)</span><strong style={{color:"var(--warn)"}}>{fmt(ch.custo_extra_mensal)}/mês</strong></div>
               <div className="usina-row usina-row-total"><span>Custo a mais para a usina</span><strong style={{color:"var(--warn)"}}>{fmtN(ch.custo_extra_kwh,6)} R$/kWh</strong></div>
-              <div className="usina-info"><Info size={11}/> Os créditos só abatem a energia. Demanda e iluminação o cliente segue pagando cheias à distribuidora, então o desconto sobre elas sai da tarifa que a usina cobra: {descontoCheia}% na fatura cheia = {fmtN(ch.desconto_equivalente*100,2)}% só na TUSD + TE.</div>
+              <div className="usina-info"><Info size={11}/> Os créditos só abatem a energia acima do consumo mínimo. Demanda, iluminação e consumo mínimo o cliente segue pagando cheios à distribuidora, então o desconto sobre elas sai da tarifa que a usina cobra: {descontoCheia}% na fatura cheia = {fmtN(ch.desconto_equivalente*100,2)}% só na TUSD + TE.</div>
             </div>
             <table className="gd2-tabela cheia-tabela">
               <thead>

@@ -39,10 +39,9 @@ export function calcular(params, conc) {
   const fator_geracao = fator_informado > 0 ? fator_informado : (te_fp > 0 ? te_p / te_fp : 0);
   const fator_ajuste  = fator_geracao > 0 ? 1 / fator_geracao : 0;
 
-  // Taxa de disponibilidade: só existe no Grupo B.
-  // No Grupo A o faturamento mínimo é a demanda contratada, não um piso de kWh.
-  const grupo_a = grupo === "A4" || grupo === "A3" || grupo === "A3a" || grupo === "A2";
-  const disp_kwh = grupo_a ? 0 : disponibilidade_kwh;
+  // Consumo mínimo (disponibilidade): os créditos não abatem essa parte, que o cliente
+  // paga cheia na fatura com GD. Sai do posto fora ponta. Não aparece na fatura atual.
+  const disp_kwh = Math.min(disponibilidade_kwh || 0, consumo_fp);
   const cons_fp_efetivo = Math.max(consumo_fp - disp_kwh, 0);
 
   // Tarifa média ponderada (sem tributos)
@@ -54,18 +53,18 @@ export function calcular(params, conc) {
 
   // Geração necessária
   const geracao_ponta = consumo_p * fator_geracao;
-  const geracao_fp    = consumo_fp;
+  const geracao_fp    = cons_fp_efetivo;
   const geracao_total = geracao_ponta + geracao_fp;
-  const kwh_extra     = geracao_total - (consumo_p + consumo_fp);
+  const kwh_extra     = geracao_ponta - consumo_p;
 
   // Fatura ATUAL
   const fa_te_p     = consumo_p         * te_p         * mult;
-  const fa_te_fp    = cons_fp_efetivo   * te_fp        * mult;
+  const fa_te_fp    = consumo_fp        * te_fp        * mult;
   const fa_tusd_p   = consumo_p         * tusd_cons_p  * mult;
-  const fa_tusd_fp  = cons_fp_efetivo   * tusd_cons_fp * mult;
+  const fa_tusd_fp  = consumo_fp        * tusd_cons_fp * mult;
   const fa_dem_p    = dem_p  > 0 ? dem_p  * tar_dem_p  * mult : 0;
   const fa_dem_fp   = dem_fp > 0 ? dem_fp * tar_dem_fp * mult : 0;
-  const fa_disp     = disp_kwh * tar_total_fp * mult;
+  const fa_disp     = 0;
   const fa_bandeira = (consumo_p + consumo_fp) * bandeira * mult;
   const fa_tip      = tip;
   const subtotal_atual = fa_te_p + fa_te_fp + fa_tusd_p + fa_tusd_fp
@@ -85,7 +84,7 @@ export function calcular(params, conc) {
   const fg_tusd_fp = cons_fp_efetivo * tusd_cons_fp* mult * ratio;
   const fg_dem_p   = fa_dem_p;
   const fg_dem_fp  = fa_dem_fp;
-  const fg_disp    = fa_disp;
+  const fg_disp    = disp_kwh * tar_total_fp * mult;
   const fg_bandeira= fa_bandeira;
   const fg_tip     = fa_tip;
   // Gestão: valor fixo em R$, sem tributos, cobrado só na fatura com GD
@@ -97,7 +96,9 @@ export function calcular(params, conc) {
   const pct_economia   = subtotal_atual > 0 ? economia_total / subtotal_atual : 0;
 
   // Faturamento da usina
-  const receita_mensal             = (consumo_p + consumo_fp) * tar_desconto_c_trib;
+  // A usina só recebe pela energia compensada: o consumo mínimo (disponibilidade) o cliente paga cheio
+  const kwh_compensados            = consumo_p + cons_fp_efetivo;
+  const receita_mensal             = fg_te_p + fg_te_fp + fg_tusd_p + fg_tusd_fp;
   const receita_anual              = receita_mensal * 12;
   const tar_fp_c_desc_c_trib       = te_fp * mult * (1 - desconto_gd);
   const custo_oport_mensal         = kwh_extra * tar_fp_c_desc_c_trib;
@@ -126,6 +127,7 @@ export function calcular(params, conc) {
     tar_total_fp_trib: tar_total_fp * mult,
     tar_media, tar_media_c_trib, tar_desconto, tar_desconto_c_trib,
     fator_ajuste, fator_geracao, mult,
+    disp_kwh, kwh_compensados,
     geracao_ponta, geracao_fp, geracao_total, kwh_extra,
     fa: { te_p: fa_te_p, te_fp: fa_te_fp, tusd_p: fa_tusd_p, tusd_fp: fa_tusd_fp,
           dem_p: fa_dem_p, dem_fp: fa_dem_fp, disp: fa_disp, bandeira: fa_bandeira, tip: fa_tip, total: subtotal_atual },
@@ -146,14 +148,18 @@ export function calcular(params, conc) {
   // recebe energia × (1 − d_equiv), com d_equiv = d × fatura atual ÷ energia.
   if (desconto_cheia > 0) {
     const d = desconto_cheia;
-    const energia_trib = fa_te_p + fa_te_fp + fa_tusd_p + fa_tusd_fp + fa_disp;
-    const nao_energia  = subtotal_atual - energia_trib;   // demanda, iluminação, bandeira
+    // Só a energia compensada entra no preço da usina; o consumo mínimo vai cheio à distribuidora
+    const energia_trib = fa_te_p + fa_tusd_p + cons_fp_efetivo * tar_total_fp * mult;
+    const nao_energia  = subtotal_atual - energia_trib;   // demanda, iluminação, bandeira, consumo mínimo
     const desconto_equivalente = energia_trib > 0 ? d * subtotal_atual / energia_trib : 0;
     const eq = calcular({ ...params, desconto_gd: desconto_equivalente, desconto_cheia: 0 }, conc);
 
     const fc = {};
-    for (const k of ["te_p", "te_fp", "tusd_p", "tusd_fp", "dem_p", "dem_fp", "disp", "bandeira", "tip"])
+    for (const k of ["te_p", "tusd_p", "dem_p", "dem_fp", "bandeira", "tip"])
       fc[k] = out.fa[k] * (1 - d);
+    fc.te_fp   = cons_fp_efetivo * te_fp * mult * (1 - d);
+    fc.tusd_fp = cons_fp_efetivo * tusd_cons_fp * mult * (1 - d);
+    fc.disp    = fg_disp * (1 - d);
     fc.gestao = gestao;
     fc.total  = subtotal_atual * (1 - d) + gestao;
 
@@ -174,12 +180,12 @@ export function calcular(params, conc) {
       peso_energia: subtotal_atual > 0 ? energia_trib / subtotal_atual : 0,
       // O que o usineiro dá de desconto sobre itens que não recebe (demanda, iluminação)
       custo_extra_mensal: d * nao_energia,
-      custo_extra_kwh: consumo_total > 0 ? d * nao_energia / consumo_total : 0,
+      custo_extra_kwh: kwh_compensados > 0 ? d * nao_energia / kwh_compensados : 0,
       demanda_rs,
       demanda_rs_kwh: consumo_total > 0 ? demanda_rs / consumo_total : 0,
       horas_mes: 730,
       fator_carga: dem_kw > 0 ? consumo_total / (dem_kw * 730) : 0,
-      tar_cheia_c_trib: consumo_total > 0 ? eq.usina.receita_mensal / consumo_total : 0,
+      tar_cheia_c_trib: kwh_compensados > 0 ? eq.usina.receita_mensal / kwh_compensados : 0,
       usina: eq.usina,
     };
   }
