@@ -698,3 +698,11 @@ body { background: var(--bg); color: var(--text); -webkit-font-smoothing: antial
   .faturas-seta { flex-direction: row; justify-content: center; padding: 4px 0; }
   .faturas-seta .seta-arrow { transform: rotate(90deg); }
 }
+.sb-title-com-box { justify-content: space-between; }
+.sb-title-com-box > span { display: flex; align-items: center; gap: 5px; }
+.creditos-check { font-size: 0.6rem; letter-spacing: 0.06em; text-transform: uppercase; gap: 5px; }
+.creditos-check input { width: 13px; height: 13px; }
+.sb-title-com-box > span, .creditos-check span { white-space: nowrap; }
+.sb-title-com-box { letter-spacing: 0.05em; gap: 6px; }
+.creditos-check { letter-spacing: 0.03em; }
+.sb-title-com-box { gap: 2px; letter-spacing: 0.04em; }

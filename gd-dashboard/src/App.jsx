@@ -254,6 +254,9 @@ export default function App() {
   const [gestao,    setGestao]    = useState(0);
   // Grupo B: consumo mínimo (disponibilidade) em kWh, pago cheio mesmo com GD
   const [dispKwh,   setDispKwh]   = useState(100);
+  // Só nomenclatura: o desconto vem de créditos de energia em vez de uma GD. O cálculo não muda.
+  const [usoCreditos, setUsoCreditos] = useState(false);
+  const nomeGD = usoCreditos ? "uso de créditos" : "GD";
   // Terceiro comparativo (só Grupo A): desconto sobre a fatura inteira
   const [faturaCheia,   setFaturaCheia]   = useState(false);
   const [descontoCheia, setDescontoCheia] = useState(0);
@@ -394,7 +397,13 @@ export default function App() {
           </label>
         )}
         <div className="divider"/>
-        <div className="sb-section-title"><Gauge size={11}/> {grupoB ? "Consumo" : "Consumo & Demanda"}</div>
+        <div className="sb-section-title sb-title-com-box">
+          <span><Gauge size={11}/> {grupoB ? "Consumo" : "Consumo & Demanda"}</span>
+          <label className="gd2-check creditos-check">
+            <input type="checkbox" checked={usoCreditos} onChange={e => setUsoCreditos(e.target.checked)}/>
+            <span>Uso de créditos</span>
+          </label>
+        </div>
         {grupoB ? (<>
           <NumInput label="Consumo Total (kWh)" value={consumoTotal} onChange={setConsumoTotal} unit=" kWh"/>
         </>) : (<>
@@ -419,7 +428,7 @@ export default function App() {
         <NumInput label="TIP — Taxa Ilum. Pública (R$)" value={tip} onChange={setTip} fmtFn={v=>`R$ ${fmtK(v)}`}/>
         <div className="divider"/>
         <div className="desconto-box">
-          <div className="sb-section-title" style={{marginBottom:6}}><Leaf size={11}/> Desconto GD</div>
+          <div className="sb-section-title" style={{marginBottom:6}}><Leaf size={11}/> Desconto {nomeGD}</div>
           <NumInput label="Desconto ao cliente (%)" value={desconto} onChange={setDesconto} fmtFn={v=>`${v}%`}/>
           <div className="desconto-info">Tarifa final: <strong>{r ? fmtN(r.tar_desconto_c_trib,6) : "—"} R$/kWh</strong></div>
           {mostrarCheia && (<>
@@ -437,7 +446,7 @@ export default function App() {
         <div className="desconto-box gestao-box">
           <div className="sb-section-title" style={{marginBottom:6}}><DollarSign size={11}/> Gestão</div>
           <NumInput label="Valor da gestão (R$)" value={gestao} onChange={setGestao} fmtFn={v=>`R$ ${fmtK(v)}`}/>
-          <div className="desconto-info">Sem tributos. Entra na Fatura com GD.</div>
+          <div className="desconto-info">Sem tributos. Entra na Fatura com {nomeGD}.</div>
         </div>
     </div>
   );
@@ -485,7 +494,7 @@ export default function App() {
   // ── Propostas salvas ────────────────────────────────────────────────────────
   const inputsAtuais = () => ({
     concId, grupo, modal, consumoP, consumoFP, consumoTotal, demP, demFP,
-    icms, pis, cofins, bandeira, tip, desconto, gestao, dispKwh, faturaCheia, descontoCheia,
+    icms, pis, cofins, bandeira, tip, desconto, gestao, dispKwh, usoCreditos, faturaCheia, descontoCheia,
     gd2, fioBP, fioBFP, anoFioB,
     editTarifas, editTar,
     cliente: { nome: nomeCliente, cpf: cpfCliente, tel: telCliente, end: endCliente },
@@ -498,7 +507,7 @@ export default function App() {
     if (d.consumoTotal != null) setConsumoTotal(d.consumoTotal);
     setDemP(d.demP); setDemFP(d.demFP);
     setIcms(d.icms); setPis(d.pis); setCofins(d.cofins);
-    setBandeira(d.bandeira); setTip(d.tip); setDesconto(d.desconto); setGestao(d.gestao || 0); setDispKwh(d.dispKwh ?? 100);
+    setBandeira(d.bandeira); setTip(d.tip); setDesconto(d.desconto); setGestao(d.gestao || 0); setDispKwh(d.dispKwh ?? 100); setUsoCreditos(Boolean(d.usoCreditos));
     setFaturaCheia(Boolean(d.faturaCheia)); setDescontoCheia(d.descontoCheia || 0);
     setGd2(Boolean(d.gd2)); setFioBP(d.fioBP ?? null); setFioBFP(d.fioBFP ?? null);
     setAnoFioB(d.anoFioB || anoAtual);
@@ -708,7 +717,7 @@ export default function App() {
 
       <div className="kpi-grid">
         <KpiCard label="Fatura Atual" value={fmt(r.fa.total)} icon={DollarSign} color="neutral" sub={`${fmtK(cTot)} kWh totais`}/>
-        <KpiCard label="Fatura com GD" value={fmt(r.fg.total)} icon={Leaf} color="green"/>
+        <KpiCard label={`Fatura com ${nomeGD}`} value={fmt(r.fg.total)} icon={Leaf} color="green"/>
         <KpiCard label="Economia Mensal" value={fmt(r.economia_total)} icon={TrendingDown} color="accent" delta={-r.pct_economia}/>
         <KpiCard label="Economia Anual" value={fmt(r.economia_total*12)} icon={BarChart3} color="accent" sub="12 meses"/>
       </div>
@@ -716,14 +725,14 @@ export default function App() {
       {/* Faturas lado a lado */}
       <div className={`faturas-comparativo ${ch ? "faturas-tres" : ""}`}>
         <FaturaDetalhada title="Fatura Atual" colorClass="fatura-atual-card"
-          rows={rowsAtual} total={r.fa.total} badge="Sem GD" badgeClass="badge-neutro"/>
+          rows={rowsAtual} total={r.fa.total} badge={`Sem ${nomeGD}`} badgeClass="badge-neutro"/>
         <div className="faturas-seta">
           <ArrowRight size={28} className="seta-arrow"/>
         </div>
-        <FaturaDetalhada title="Fatura com GD" colorClass="fatura-gd-card"
+        <FaturaDetalhada title={`Fatura com ${nomeGD}`} colorClass="fatura-gd-card"
           rows={rowsGD} total={r.fg.total} badge={`${desconto}% desconto`} badgeClass="badge-green"/>
         {ch && (
-          <FaturaDetalhada title="Fatura com GD — fatura cheia" colorClass="fatura-gd-card fatura-cheia-card"
+          <FaturaDetalhada title={`Fatura com ${nomeGD} — fatura cheia`} colorClass="fatura-gd-card fatura-cheia-card"
             rows={rowsCheia} total={ch.fc.total} badge={`${descontoCheia}% na fatura toda`} badgeClass="badge-green"/>
         )}
       </div>
@@ -765,7 +774,7 @@ export default function App() {
                 </span>
               )}
             </span>
-            <span>Com GD ({desconto}% desc.): <strong>{fmtN(r.tar_desconto_c_trib,6)} R$/kWh</strong></span>
+            <span>Com {nomeGD} ({desconto}% desc.): <strong>{fmtN(r.tar_desconto_c_trib,6)} R$/kWh</strong></span>
             {!grupoB && <span>Fator ajuste ponta: <strong>{fmtN(r.fator_geracao,4)}×</strong></span>}
           </div>
         </div>
