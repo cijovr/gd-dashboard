@@ -18,6 +18,8 @@ import "./App.css";
 const fmt  = (v) => (v ?? 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 const fmtN = (v, d=2) => (v ?? 0).toLocaleString("pt-BR", { minimumFractionDigits: d, maximumFractionDigits: d });
 const fmtP = (v) => ((v ?? 0) * 100).toFixed(1) + "%";
+// Volume das faturas: kWh inteiros, sem centavos de kWh
+const fmtVol = (v) => Math.round(v ?? 0).toLocaleString("pt-BR");
 const fmtK = (v) => (v ?? 0).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 // ── NumInput ──────────────────────────────────────────────────────────────────
@@ -98,10 +100,10 @@ function FaturaDetalhada({ title, colorClass, rows, total, badge, badgeClass }) 
       <table className="fatura-table">
         <thead className="fatura-table-head">
           <tr>
-            <th style={{textAlign:"left"}}>Item</th>
-            <th>Volume</th>
+            <th className="col-item" style={{textAlign:"left"}}>Item</th>
+            <th className="col-vol">Volume</th>
             <th className="col-tarifa">Tarifa c/ tributos (R$/kWh ou kW)</th>
-            <th>Valor</th>
+            <th className="col-valor">Valor</th>
           </tr>
         </thead>
         <tbody>
@@ -116,8 +118,8 @@ function FaturaDetalhada({ title, colorClass, rows, total, badge, badgeClass }) 
         </tbody>
         <tfoot>
           <tr className="fatura-total-row">
-            <td colSpan={3}>TOTAL (com tributos)</td>
-            <td>{fmt(total)}</td>
+            <td colSpan={2}>TOTAL (com tributos)</td>
+            <td colSpan={2}>{fmt(total)}</td>
           </tr>
         </tfoot>
       </table>
@@ -540,31 +542,31 @@ export default function App() {
   const cDisp  = r.disp_kwh;
   const cFPEf  = cFP - cDisp;
   const tarDispTrib = (tar.tusd_cons_fp + tar.te_fp) * mult;
-  const linhaDisp = (valor, fator = 1) => ({ label:"Consumo mínimo (disponibilidade)", tarifa: fmtN(tarDispTrib*fator,6), volume: `${fmtK(cDisp)} kWh`, valor });
+  const linhaDisp = (valor, fator = 1) => ({ label:"Consumo mínimo", tarifa: fmtN(tarDispTrib*fator,6), volume: `${fmtVol(cDisp)} kWh`, valor });
 
   // Rows fatura atual
   const rowsAtual = [
-    { label:"TE Ponta",             tarifa: fmtN(tar.te_p*mult,6),          volume: `${fmtK(cP)} kWh`,  valor: r.fa.te_p },
-    { label: grupoB ? "TE" : "TE Fora Ponta", tarifa: fmtN(tar.te_fp*mult,6),         volume: `${fmtK(cFP)} kWh`, valor: r.fa.te_fp },
-    { label:"TUSD Cons. Ponta",     tarifa: fmtN(tar.tusd_cons_p*mult,6),   volume: `${fmtK(cP)} kWh`,  valor: r.fa.tusd_p },
-    { label: grupoB ? "TUSD" : "TUSD Cons. FP", tarifa: fmtN(tar.tusd_cons_fp*mult,6),  volume: `${fmtK(cFP)} kWh`, valor: r.fa.tusd_fp },
+    { label:"TE Ponta",             tarifa: fmtN(tar.te_p*mult,6),          volume: `${fmtVol(cP)} kWh`,  valor: r.fa.te_p },
+    { label: grupoB ? "TE" : "TE Fora Ponta", tarifa: fmtN(tar.te_fp*mult,6),         volume: `${fmtVol(cFP)} kWh`, valor: r.fa.te_fp },
+    { label:"TUSD Cons. Ponta",     tarifa: fmtN(tar.tusd_cons_p*mult,6),   volume: `${fmtVol(cP)} kWh`,  valor: r.fa.tusd_p },
+    { label: grupoB ? "TUSD" : "TUSD Cons. FP", tarifa: fmtN(tar.tusd_cons_fp*mult,6),  volume: `${fmtVol(cFP)} kWh`, valor: r.fa.tusd_fp },
     { label:"Demanda Ponta",        tarifa: fmtN(tar.tusd_dem_p * mult,2),  volume: `${demP} kW`,  valor: r.fa.dem_p },
     { label:"Demanda FP",           tarifa: fmtN(tar.tusd_dem_fp * mult,2), volume: `${demFP} kW`, valor: r.fa.dem_fp },
-    { label:"Bandeira",             tarifa: fmtN(bandeira*mult,6),          volume: `${fmtK(cTot)} kWh`, valor: r.fa.bandeira },
+    { label:"Bandeira",             tarifa: fmtN(bandeira*mult,6),          volume: `${fmtVol(cTot)} kWh`, valor: r.fa.bandeira },
     { label:"TIP",                  tarifa: "—",                       volume: "—",                      valor: r.fa.tip },
   ];
 
   // Rows fatura GD (itens de consumo × ratio, demanda igual)
   const ratio = r.tar_desconto / r.tar_media;
   const rowsGD = [
-    { label:"TE Ponta",             tarifa: fmtN(tar.te_p*ratio*mult,6),         volume: `${fmtK(cP)} kWh`,  valor: r.fg.te_p },
-    { label: grupoB ? "TE" : "TE Fora Ponta", tarifa: fmtN(tar.te_fp*ratio*mult,6),        volume: `${fmtK(cFPEf)} kWh`, valor: r.fg.te_fp },
-    { label:"TUSD Cons. Ponta",     tarifa: fmtN(tar.tusd_cons_p*ratio*mult,6),  volume: `${fmtK(cP)} kWh`,  valor: r.fg.tusd_p },
-    { label: grupoB ? "TUSD" : "TUSD Cons. FP", tarifa: fmtN(tar.tusd_cons_fp*ratio*mult,6), volume: `${fmtK(cFPEf)} kWh`, valor: r.fg.tusd_fp },
     linhaDisp(r.fg.disp),
+    { label:"TE Ponta",             tarifa: fmtN(tar.te_p*ratio*mult,6),         volume: `${fmtVol(cP)} kWh`,  valor: r.fg.te_p },
+    { label: grupoB ? "TE" : "TE Fora Ponta", tarifa: fmtN(tar.te_fp*ratio*mult,6),        volume: `${fmtVol(cFPEf)} kWh`, valor: r.fg.te_fp },
+    { label:"TUSD Cons. Ponta",     tarifa: fmtN(tar.tusd_cons_p*ratio*mult,6),  volume: `${fmtVol(cP)} kWh`,  valor: r.fg.tusd_p },
+    { label: grupoB ? "TUSD" : "TUSD Cons. FP", tarifa: fmtN(tar.tusd_cons_fp*ratio*mult,6), volume: `${fmtVol(cFPEf)} kWh`, valor: r.fg.tusd_fp },
     { label:"Demanda Ponta",        tarifa: fmtN(tar.tusd_dem_p * mult,2),  volume: `${demP} kW`,  valor: r.fg.dem_p },
     { label:"Demanda FP",           tarifa: fmtN(tar.tusd_dem_fp * mult,2), volume: `${demFP} kW`, valor: r.fg.dem_fp },
-    { label:"Bandeira",             tarifa: fmtN(bandeira*mult,6),               volume: `${fmtK(cTot)} kWh`, valor: r.fg.bandeira },
+    { label:"Bandeira",             tarifa: fmtN(bandeira*mult,6),               volume: `${fmtVol(cTot)} kWh`, valor: r.fg.bandeira },
     { label:"TIP",                  tarifa: "—",                            volume: "—",                      valor: r.fg.tip },
     { label:"Gestão", tarifa: "—",                           volume: "—",                      valor: r.fg.gestao },
   ];
@@ -573,14 +575,14 @@ export default function App() {
   const ch = r.cheia;
   const kCheia = ch ? 1 - ch.desconto : 1;
   const rowsCheia = ch ? [
-    { label:"TE Ponta",             tarifa: fmtN(tar.te_p*mult*kCheia,6),         volume: `${fmtK(cP)} kWh`,  valor: ch.fc.te_p },
-    { label:"TE Fora Ponta",        tarifa: fmtN(tar.te_fp*mult*kCheia,6),        volume: `${fmtK(cFPEf)} kWh`, valor: ch.fc.te_fp },
-    { label:"TUSD Cons. Ponta",     tarifa: fmtN(tar.tusd_cons_p*mult*kCheia,6),  volume: `${fmtK(cP)} kWh`,  valor: ch.fc.tusd_p },
-    { label:"TUSD Cons. FP",        tarifa: fmtN(tar.tusd_cons_fp*mult*kCheia,6), volume: `${fmtK(cFPEf)} kWh`, valor: ch.fc.tusd_fp },
     linhaDisp(ch.fc.disp, kCheia),
+    { label:"TE Ponta",             tarifa: fmtN(tar.te_p*mult*kCheia,6),         volume: `${fmtVol(cP)} kWh`,  valor: ch.fc.te_p },
+    { label:"TE Fora Ponta",        tarifa: fmtN(tar.te_fp*mult*kCheia,6),        volume: `${fmtVol(cFPEf)} kWh`, valor: ch.fc.te_fp },
+    { label:"TUSD Cons. Ponta",     tarifa: fmtN(tar.tusd_cons_p*mult*kCheia,6),  volume: `${fmtVol(cP)} kWh`,  valor: ch.fc.tusd_p },
+    { label:"TUSD Cons. FP",        tarifa: fmtN(tar.tusd_cons_fp*mult*kCheia,6), volume: `${fmtVol(cFPEf)} kWh`, valor: ch.fc.tusd_fp },
     { label:"Demanda Ponta",        tarifa: fmtN(tar.tusd_dem_p*mult*kCheia,2),   volume: `${demP} kW`,  valor: ch.fc.dem_p },
     { label:"Demanda FP",           tarifa: fmtN(tar.tusd_dem_fp*mult*kCheia,2),  volume: `${demFP} kW`, valor: ch.fc.dem_fp },
-    { label:"Bandeira",             tarifa: fmtN(bandeira*mult*kCheia,6),         volume: `${fmtK(cTot)} kWh`, valor: ch.fc.bandeira },
+    { label:"Bandeira",             tarifa: fmtN(bandeira*mult*kCheia,6),         volume: `${fmtVol(cTot)} kWh`, valor: ch.fc.bandeira },
     { label:"TIP",                  tarifa: "—",                                  volume: "—",                 valor: ch.fc.tip },
     { label:"Gestão",               tarifa: "—",                                  volume: "—",                 valor: ch.fc.gestao },
   ] : [];

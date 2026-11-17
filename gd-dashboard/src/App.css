@@ -672,3 +672,29 @@ body { background: var(--bg); color: var(--text); -webkit-font-smoothing: antial
   .cheia-check input { display: none; }
 }
 .cheia-regua { display: flex; flex-direction: column; gap: 3px; }
+
+/* Tabelas de fatura com as mesmas colunas e a mesma altura de linha, lado a lado */
+.fatura-table-head th { vertical-align: bottom; line-height: 1.35; }
+.fatura-tr td { white-space: nowrap; height: 34px; }
+@media (min-width: 769px) {
+  .fatura-table { table-layout: fixed; }
+  .fatura-table-head th.col-item   { width: 30%; }
+  .fatura-table-head th.col-vol    { width: 23%; }
+  .fatura-table-head th.col-tarifa { width: 24%; }
+  .fatura-table-head th.col-valor  { width: 23%; }
+  .fatura-tr td:first-child { overflow: hidden; text-overflow: ellipsis; }
+}
+/* Três faturas lado a lado: letra e respiro menores; empilha abaixo de 1500px */
+.faturas-tres .fatura-tr td { font-size: 0.68rem; padding: 6px 7px; }
+.faturas-tres .fatura-table-head th { padding: 7px 7px 5px; }
+@media (max-width: 1500px) {
+  .faturas-comparativo.faturas-tres { grid-template-columns: 1fr; }
+  .faturas-tres .faturas-seta { display: none; }
+}
+.fatura-total-row td:last-child { text-align: right; white-space: nowrap; }
+/* Duas faturas lado a lado só quando cada uma tem largura para as quatro colunas */
+@media (max-width: 1200px) {
+  .faturas-comparativo { grid-template-columns: 1fr; }
+  .faturas-seta { flex-direction: row; justify-content: center; padding: 4px 0; }
+  .faturas-seta .seta-arrow { transform: rotate(90deg); }
+}
