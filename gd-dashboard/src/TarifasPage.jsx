@@ -24,17 +24,19 @@ function vigenciaChip(iso) {
 /* ── campo ────────────────────────────────────────────────────── */
 function Campo({ label, unidade, valor, onChange, casas = 2, escala = 1 }) {
   const [rascunho, setRascunho] = useState(null);
-  const exibido = rascunho ?? mostra(valor * escala, casas);
+  const atual = mostra(valor * escala, casas);
   return (
     <label className="tcfg-campo">
       <span className="tcfg-campo-label">{label} <em>({unidade})</em></span>
       <input
         className="tcfg-campo-input"
         inputMode="decimal"
-        value={exibido}
-        onFocus={() => setRascunho(String(valor * escala).replace(".", ","))}
+        value={rascunho ?? atual}
+        placeholder={atual}
+        onFocus={() => setRascunho("")}
         onChange={(e) => setRascunho(e.target.value)}
-        onBlur={() => { onChange(paraNumero(rascunho ?? exibido) / escala); setRascunho(null); }}
+        // Ao clicar o campo fica limpo para digitar; se sair sem digitar, fica o valor anterior
+        onBlur={() => { if (rascunho?.trim()) onChange(paraNumero(rascunho) / escala); setRascunho(null); }}
         onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }}
       />
     </label>

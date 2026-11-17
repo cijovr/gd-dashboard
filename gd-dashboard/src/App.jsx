@@ -17,10 +17,34 @@ import "./App.css";
 
 const fmt  = (v) => (v ?? 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 const fmtN = (v, d=2) => (v ?? 0).toLocaleString("pt-BR", { minimumFractionDigits: d, maximumFractionDigits: d });
-const fmtP = (v) => ((v ?? 0) * 100).toFixed(1) + "%";
+const fmtP = (v) => fmtN((v ?? 0) * 100, 1) + "%";
+// Número digitado pelo usuário, no padrão brasileiro (vírgula decimal, ponto no milhar)
+const fmtNum = (v, max = 4) => (v ?? 0).toLocaleString("pt-BR", { maximumFractionDigits: max });
+// Lê número no padrão brasileiro: "1.500,25", "20,5", "3800"; aceita "20.5" como decimal
+function lerNumero(str) {
+  const t = String(str).trim().replace(/\s|R\$|%|kWh|kW/gi, "");
+  if (!t) return NaN;
+  if (t.includes(",")) return parseFloat(t.replace(/\./g, "").replace(",", "."));
+  if (/^\d{1,3}(\.\d{3})+$/.test(t)) return parseFloat(t.replace(/\./g, ""));
+  return parseFloat(t);
+}
 // Volume das faturas: kWh inteiros, sem centavos de kWh
 const fmtVol = (v) => Math.round(v ?? 0).toLocaleString("pt-BR");
 const fmtK = (v) => (v ?? 0).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+// Tarifa do painel "Editar Tarifas": limpa ao clicar, grava ao sair, padrão brasileiro
+function TarifaEditavel({ valor, casas, onChange }) {
+  const [rascunho, setRascunho] = useState(null);
+  const atual = fmtN(valor, casas);
+  return (
+    <input className="tar-edit-input" type="text" inputMode="decimal"
+      value={rascunho ?? atual} placeholder={atual}
+      onFocus={() => setRascunho("")}
+      onChange={e => setRascunho(e.target.value)}
+      onBlur={() => { const n = lerNumero(rascunho ?? ""); if (!isNaN(n)) onChange(n); setRascunho(null); }}
+      onKeyDown={e => { if (e.key === "Enter") e.target.blur(); }}/>
+  );
+}
 
 // ── NumInput ──────────────────────────────────────────────────────────────────
 function NumInput({ label, value, onChange, min=0, max=999999, unit="", fmtFn, readOnly }) {
@@ -28,18 +52,20 @@ function NumInput({ label, value, onChange, min=0, max=999999, unit="", fmtFn, r
   const [focused, setFocused] = useState(false);
   if (!focused && String(value) !== raw) setRaw(String(value));
   const commit = (str) => {
-    const n = parseFloat(str.replace(",", "."));
+    const n = lerNumero(str);
     if (!isNaN(n)) { const c = Math.min(max, Math.max(min, n)); onChange?.(c); setRaw(String(c)); }
-    else setRaw(String(value));
+    else setRaw(String(value));   // campo deixado vazio: mantém o valor anterior
   };
+  const exibido = fmtFn ? fmtFn(value) : fmtNum(value);
   return (
     <div className="numinput-group">
       {label && <label className="numinput-label">{label}</label>}
       <div className="numinput-wrap">
         <input type="text" inputMode="decimal" className={`numinput ${readOnly ? "numinput-readonly" : ""}`}
-          value={focused ? raw : (fmtFn ? fmtFn(value) : `${value}${unit}`)}
+          value={focused ? raw : exibido}
+          placeholder={exibido}
           readOnly={readOnly}
-          onFocus={() => { if (!readOnly) { setFocused(true); setRaw(String(value)); } }}
+          onFocus={() => { if (!readOnly) { setFocused(true); setRaw(""); } }}
           onBlur={() => { setFocused(false); if (!readOnly) commit(raw); }}
           onChange={e => { if (!readOnly) setRaw(e.target.value); }}
           onKeyDown={e => { if (e.key === "Enter") e.target.blur(); }} />
@@ -73,7 +99,7 @@ function KpiCard({ label, value, sub, color="accent", icon: Icon, delta }) {
       {delta !== undefined && (
         <div className={`kpi-delta ${delta >= 0 ? "pos" : "neg"}`}>
           {delta >= 0 ? <TrendingUp size={12}/> : <TrendingDown size={12}/>}
-          {Math.abs(delta * 100).toFixed(1)}%
+          {fmtN(Math.abs(delta * 100), 1)}%
         </div>
       )}
     </div>
@@ -278,6 +304,9 @@ export default function App() {
   const grupoB = grupo === "B";
   // Box marcada mostra o campo; o comparativo só sai com um desconto digitado (campo obrigatório)
   const mostrarCheia = !grupoB && faturaCheia;
+  // Percentuais digitados, para exibir em texto no padrão brasileiro
+  const pDesc  = fmtNum(desconto);
+  const pCheia = fmtNum(descontoCheia);
   const faltaDescontoCheia = mostrarCheia && !(descontoCheia > 0);
   const cheiaAtiva = mostrarCheia && descontoCheia > 0;
   const escolherGrupo = (g) => {
@@ -418,27 +447,27 @@ export default function App() {
         <div className="divider"/>
         <div className="sb-section-title"><Gauge size={11}/> Tributos</div>
         <div className="row-2">
-          <NumInput label="ICMS (%)" value={icms} onChange={setIcms} fmtFn={v=>`${v.toFixed(1)}%`}/>
-          <NumInput label="PIS (%)" value={pis} onChange={setPis} fmtFn={v=>`${v.toFixed(3)}%`}/>
+          <NumInput label="ICMS (%)" value={icms} onChange={setIcms} fmtFn={v=>`${fmtN(v,1)}%`}/>
+          <NumInput label="PIS (%)" value={pis} onChange={setPis} fmtFn={v=>`${fmtN(v,3)}%`}/>
         </div>
         <div className="row-2">
-          <NumInput label="COFINS (%)" value={cofins} onChange={setCofins} fmtFn={v=>`${v.toFixed(3)}%`}/>
-          <NumInput label="Bandeira (R$/kWh)" value={bandeira} onChange={setBandeira} fmtFn={v=>`R$ ${v.toFixed(4)}`}/>
+          <NumInput label="COFINS (%)" value={cofins} onChange={setCofins} fmtFn={v=>`${fmtN(v,3)}%`}/>
+          <NumInput label="Bandeira (R$/kWh)" value={bandeira} onChange={setBandeira} fmtFn={v=>`R$ ${fmtN(v,4)}`}/>
         </div>
         <NumInput label="TIP — Taxa Ilum. Pública (R$)" value={tip} onChange={setTip} fmtFn={v=>`R$ ${fmtK(v)}`}/>
         <div className="divider"/>
         <div className="desconto-box">
           <div className="sb-section-title" style={{marginBottom:6}}><Leaf size={11}/> Desconto {nomeGD}</div>
-          <NumInput label="Desconto ao cliente (%)" value={desconto} onChange={setDesconto} fmtFn={v=>`${v}%`}/>
+          <NumInput label="Desconto ao cliente (%)" value={desconto} onChange={setDesconto} fmtFn={v=>`${fmtNum(v)}%`}/>
           <div className="desconto-info">Tarifa final: <strong>{r ? fmtN(r.tar_desconto_c_trib,6) : "—"} R$/kWh</strong></div>
           {mostrarCheia && (<>
-            <NumInput label="Desconto ao cliente fatura cheia (%)" value={descontoCheia} onChange={setDescontoCheia} fmtFn={v=>`${v}%`}/>
+            <NumInput label="Desconto ao cliente fatura cheia (%)" value={descontoCheia} onChange={setDescontoCheia} fmtFn={v=>`${fmtNum(v)}%`}/>
             {faltaDescontoCheia
               ? <div className="campo-erro">Digite o desconto da fatura cheia para ver o comparativo.</div>
               : r?.cheia && (
                 <div className="desconto-info cheia-regua">
-                  <span>{desconto}% só na TUSD + TE = <strong>{fmtN(desconto*r.cheia.peso_energia,2)}%</strong> da fatura toda</span>
-                  <span>{descontoCheia}% na fatura cheia = <strong>{fmtN(r.cheia.desconto_equivalente*100,2)}%</strong> só na TUSD + TE</span>
+                  <span>{pDesc}% só na TUSD + TE = <strong>{fmtN(desconto*r.cheia.peso_energia,2)}%</strong> da fatura toda</span>
+                  <span>{pCheia}% na fatura cheia = <strong>{fmtN(r.cheia.desconto_equivalente*100,2)}%</strong> só na TUSD + TE</span>
                 </div>
               )}
           </>)}
@@ -559,8 +588,8 @@ export default function App() {
     { label: grupoB ? "TE" : "TE Fora Ponta", tarifa: fmtN(tar.te_fp*mult,6),         volume: `${fmtVol(cFP)} kWh`, valor: r.fa.te_fp },
     { label:"TUSD Cons. Ponta",     tarifa: fmtN(tar.tusd_cons_p*mult,6),   volume: `${fmtVol(cP)} kWh`,  valor: r.fa.tusd_p },
     { label: grupoB ? "TUSD" : "TUSD Cons. FP", tarifa: fmtN(tar.tusd_cons_fp*mult,6),  volume: `${fmtVol(cFP)} kWh`, valor: r.fa.tusd_fp },
-    { label:"Demanda Ponta",        tarifa: fmtN(tar.tusd_dem_p * mult,2),  volume: `${demP} kW`,  valor: r.fa.dem_p },
-    { label:"Demanda FP",           tarifa: fmtN(tar.tusd_dem_fp * mult,2), volume: `${demFP} kW`, valor: r.fa.dem_fp },
+    { label:"Demanda Ponta",        tarifa: fmtN(tar.tusd_dem_p * mult,2),  volume: `${fmtVol(demP)} kW`,  valor: r.fa.dem_p },
+    { label:"Demanda FP",           tarifa: fmtN(tar.tusd_dem_fp * mult,2), volume: `${fmtVol(demFP)} kW`, valor: r.fa.dem_fp },
     { label:"Bandeira",             tarifa: fmtN(bandeira*mult,6),          volume: `${fmtVol(cTot)} kWh`, valor: r.fa.bandeira },
     { label:"TIP",                  tarifa: "—",                       volume: "—",                      valor: r.fa.tip },
   ];
@@ -573,8 +602,8 @@ export default function App() {
     { label: grupoB ? "TE" : "TE Fora Ponta", tarifa: fmtN(tar.te_fp*ratio*mult,6),        volume: `${fmtVol(cFPEf)} kWh`, valor: r.fg.te_fp },
     { label:"TUSD Cons. Ponta",     tarifa: fmtN(tar.tusd_cons_p*ratio*mult,6),  volume: `${fmtVol(cP)} kWh`,  valor: r.fg.tusd_p },
     { label: grupoB ? "TUSD" : "TUSD Cons. FP", tarifa: fmtN(tar.tusd_cons_fp*ratio*mult,6), volume: `${fmtVol(cFPEf)} kWh`, valor: r.fg.tusd_fp },
-    { label:"Demanda Ponta",        tarifa: fmtN(tar.tusd_dem_p * mult,2),  volume: `${demP} kW`,  valor: r.fg.dem_p },
-    { label:"Demanda FP",           tarifa: fmtN(tar.tusd_dem_fp * mult,2), volume: `${demFP} kW`, valor: r.fg.dem_fp },
+    { label:"Demanda Ponta",        tarifa: fmtN(tar.tusd_dem_p * mult,2),  volume: `${fmtVol(demP)} kW`,  valor: r.fg.dem_p },
+    { label:"Demanda FP",           tarifa: fmtN(tar.tusd_dem_fp * mult,2), volume: `${fmtVol(demFP)} kW`, valor: r.fg.dem_fp },
     { label:"Bandeira",             tarifa: fmtN(bandeira*mult,6),               volume: `${fmtVol(cTot)} kWh`, valor: r.fg.bandeira },
     { label:"TIP",                  tarifa: "—",                            volume: "—",                      valor: r.fg.tip },
     { label:"Gestão", tarifa: "—",                           volume: "—",                      valor: r.fg.gestao },
@@ -589,8 +618,8 @@ export default function App() {
     { label:"TE Fora Ponta",        tarifa: fmtN(tar.te_fp*mult*kCheia,6),        volume: `${fmtVol(cFPEf)} kWh`, valor: ch.fc.te_fp },
     { label:"TUSD Cons. Ponta",     tarifa: fmtN(tar.tusd_cons_p*mult*kCheia,6),  volume: `${fmtVol(cP)} kWh`,  valor: ch.fc.tusd_p },
     { label:"TUSD Cons. FP",        tarifa: fmtN(tar.tusd_cons_fp*mult*kCheia,6), volume: `${fmtVol(cFPEf)} kWh`, valor: ch.fc.tusd_fp },
-    { label:"Demanda Ponta",        tarifa: fmtN(tar.tusd_dem_p*mult*kCheia,2),   volume: `${demP} kW`,  valor: ch.fc.dem_p },
-    { label:"Demanda FP",           tarifa: fmtN(tar.tusd_dem_fp*mult*kCheia,2),  volume: `${demFP} kW`, valor: ch.fc.dem_fp },
+    { label:"Demanda Ponta",        tarifa: fmtN(tar.tusd_dem_p*mult*kCheia,2),   volume: `${fmtVol(demP)} kW`,  valor: ch.fc.dem_p },
+    { label:"Demanda FP",           tarifa: fmtN(tar.tusd_dem_fp*mult*kCheia,2),  volume: `${fmtVol(demFP)} kW`, valor: ch.fc.dem_fp },
     { label:"Bandeira",             tarifa: fmtN(bandeira*mult*kCheia,6),         volume: `${fmtVol(cTot)} kWh`, valor: ch.fc.bandeira },
     { label:"TIP",                  tarifa: "—",                                  volume: "—",                 valor: ch.fc.tip },
     { label:"Gestão",               tarifa: "—",                                  volume: "—",                 valor: ch.fc.gestao },
@@ -650,8 +679,8 @@ export default function App() {
           ]).map(([label, key]) => (
             <div key={key} className="tar-edit-item">
               <span className="tar-edit-label">{label}</span>
-              <input className="tar-edit-input" type="text" value={editTar[key] ?? ""}
-                onChange={e => setEditTar(prev => ({...prev, [key]: parseFloat(e.target.value.replace(",",".")) || prev[key]}))}/>
+              <TarifaEditavel valor={editTar[key] ?? 0} casas={key.startsWith("tusd_dem") ? 2 : 6}
+                onChange={v => setEditTar(prev => ({...prev, [key]: v}))}/>
             </div>
           ))}
         </div>
@@ -730,10 +759,10 @@ export default function App() {
           <ArrowRight size={28} className="seta-arrow"/>
         </div>
         <FaturaDetalhada title={`Fatura com ${nomeGD}`} colorClass="fatura-gd-card"
-          rows={rowsGD} total={r.fg.total} badge={`${desconto}% desconto`} badgeClass="badge-green"/>
+          rows={rowsGD} total={r.fg.total} badge={`${pDesc}% desconto`} badgeClass="badge-green"/>
         {ch && (
           <FaturaDetalhada title={`Fatura com ${nomeGD} — fatura cheia`} colorClass="fatura-gd-card fatura-cheia-card"
-            rows={rowsCheia} total={ch.fc.total} badge={`${descontoCheia}% na fatura toda`} badgeClass="badge-green"/>
+            rows={rowsCheia} total={ch.fc.total} badge={`${pCheia}% na fatura toda`} badgeClass="badge-green"/>
         )}
       </div>
 
@@ -742,12 +771,12 @@ export default function App() {
           <div className="cheia-titulo">Qual desconto rende mais ao cliente?</div>
           <div className="cheia-opcoes">
             <div className={`cheia-opcao ${difCheia <= 0 ? "cheia-vence" : ""}`}>
-              <div className="cheia-opcao-label">{desconto}% só na TUSD + TE</div>
+              <div className="cheia-opcao-label">{pDesc}% só na TUSD + TE</div>
               <div className="cheia-opcao-valor">{fmt(r.economia_total)}<span>/mês</span></div>
               <div className="cheia-opcao-sub">{fmtP(r.pct_economia)} da fatura · {fmt(r.economia_total*12)} em 12 meses</div>
             </div>
             <div className={`cheia-opcao ${difCheia > 0 ? "cheia-vence" : ""}`}>
-              <div className="cheia-opcao-label">{descontoCheia}% na fatura cheia</div>
+              <div className="cheia-opcao-label">{pCheia}% na fatura cheia</div>
               <div className="cheia-opcao-valor">{fmt(ch.economia_total)}<span>/mês</span></div>
               <div className="cheia-opcao-sub">{fmtP(ch.pct_economia)} da fatura · {fmt(ch.economia_total*12)} em 12 meses</div>
             </div>
@@ -755,8 +784,8 @@ export default function App() {
           <div className="cheia-veredito">
             {Math.abs(difCheia) < 0.01
               ? <>As duas opções dão o mesmo desconto.</>
-              : <><strong>{difCheia > 0 ? `${descontoCheia}% na fatura cheia` : `${desconto}% só na TUSD + TE`}</strong> dá <strong>{fmt(Math.abs(difCheia))}/mês</strong> a mais de desconto ({fmt(Math.abs(difCheia)*12)} em 12 meses).</>}
-            {" "}Na mesma régua: {desconto}% só na TUSD + TE = {fmtN(desconto*ch.peso_energia,2)}% da fatura toda; {descontoCheia}% na fatura cheia = {fmtN(ch.desconto_equivalente*100,2)}% só na TUSD + TE.
+              : <><strong>{difCheia > 0 ? `${pCheia}% na fatura cheia` : `${pDesc}% só na TUSD + TE`}</strong> dá <strong>{fmt(Math.abs(difCheia))}/mês</strong> a mais de desconto ({fmt(Math.abs(difCheia)*12)} em 12 meses).</>}
+            {" "}Na mesma régua: {pDesc}% só na TUSD + TE = {fmtN(desconto*ch.peso_energia,2)}% da fatura toda; {pCheia}% na fatura cheia = {fmtN(ch.desconto_equivalente*100,2)}% só na TUSD + TE.
           </div>
         </div>
       )}
@@ -774,7 +803,7 @@ export default function App() {
                 </span>
               )}
             </span>
-            <span>Com {nomeGD} ({desconto}% desc.): <strong>{fmtN(r.tar_desconto_c_trib,6)} R$/kWh</strong></span>
+            <span>Com {nomeGD} ({pDesc}% desc.): <strong>{fmtN(r.tar_desconto_c_trib,6)} R$/kWh</strong></span>
             {!grupoB && <span>Fator ajuste ponta: <strong>{fmtN(r.fator_geracao,4)}×</strong></span>}
           </div>
         </div>
@@ -932,7 +961,7 @@ export default function App() {
       </div>
 
       {ch && (
-        <Section title={`Desconto na fatura cheia (${descontoCheia}%) — custo para a usina`}>
+        <Section title={`Desconto na fatura cheia (${pCheia}%) — custo para a usina`}>
           <div className="usina-full-grid cheia-usina">
             <div className="usina-bloco" style={{borderColor:"rgba(245,166,35,0.3)"}}>
               <div className="usina-row"><span>Demanda no mês (c/ tributos)</span><strong>{fmt(ch.demanda_rs)}</strong></div>
@@ -941,13 +970,13 @@ export default function App() {
               {ch.nao_energia - ch.demanda_rs > 0.01 && (
                 <div className="usina-row"><span>Iluminação pública em R$/kWh</span><strong>{fmtN((ch.nao_energia - ch.demanda_rs)/(cTot||1),6)} R$/kWh</strong></div>
               )}
-              <div className="usina-row usina-row-total"><span>Desconto dado na demanda, iluminação e consumo mínimo ({descontoCheia}%)</span><strong style={{color:"var(--warn)"}}>{fmt(ch.custo_extra_mensal)}/mês</strong></div>
+              <div className="usina-row usina-row-total"><span>Desconto dado na demanda, iluminação e consumo mínimo ({pCheia}%)</span><strong style={{color:"var(--warn)"}}>{fmt(ch.custo_extra_mensal)}/mês</strong></div>
               <div className="usina-row usina-row-total"><span>Custo a mais para a usina</span><strong style={{color:"var(--warn)"}}>{fmtN(ch.custo_extra_kwh,6)} R$/kWh</strong></div>
-              <div className="usina-info"><Info size={11}/> Os créditos só abatem a energia acima do consumo mínimo. Demanda, iluminação e consumo mínimo o cliente segue pagando cheios à distribuidora, então o desconto sobre elas sai da tarifa que a usina cobra: {descontoCheia}% na fatura cheia = {fmtN(ch.desconto_equivalente*100,2)}% só na TUSD + TE.</div>
+              <div className="usina-info"><Info size={11}/> Os créditos só abatem a energia acima do consumo mínimo. Demanda, iluminação e consumo mínimo o cliente segue pagando cheios à distribuidora, então o desconto sobre elas sai da tarifa que a usina cobra: {pCheia}% na fatura cheia = {fmtN(ch.desconto_equivalente*100,2)}% só na TUSD + TE.</div>
             </div>
             <table className="gd2-tabela cheia-tabela">
               <thead>
-                <tr><th>Usina</th><th>{desconto}% TUSD + TE</th><th>{descontoCheia}% fatura cheia</th></tr>
+                <tr><th>Usina</th><th>{pDesc}% TUSD + TE</th><th>{pCheia}% fatura cheia</th></tr>
               </thead>
               <tbody>
                 <tr><td>Tarifa recebida (c/ tributos)</td><td>{fmtN(r.tar_desconto_c_trib,6)}</td><td>{fmtN(ch.tar_cheia_c_trib,6)}</td></tr>
@@ -962,9 +991,9 @@ export default function App() {
           </div>
           <div className={`comparativo-dif ${difUsina >= 0 ? "dif-pos" : "dif-neg"}`}>
             {Math.abs(difUsina) < 0.01 ? "As duas opções rendem o mesmo para a usina" : <>
-              {descontoCheia}% na fatura cheia {difUsina < 0 ? "custa à usina " : "rende à usina "}
+              {pCheia}% na fatura cheia {difUsina < 0 ? "custa à usina " : "rende à usina "}
               <strong>{fmt(Math.abs(difUsina))}/mês</strong>
-              {` a mais que ${desconto}% só na TUSD + TE`}
+              {` a mais que ${pDesc}% só na TUSD + TE`}
             </>}
           </div>
         </Section>
@@ -974,7 +1003,7 @@ export default function App() {
         <ResponsiveContainer width="100%" height={200}>
           <BarChart data={chartUsinaData} layout="vertical" barSize={30}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" horizontal={false}/>
-            <XAxis type="number" tick={{fontSize:10,fill:"var(--text-muted)",fontFamily:"Montserrat"}} axisLine={false} tickLine={false} tickFormatter={v=>`R$${(v/1000).toFixed(0)}k`}/>
+            <XAxis type="number" tick={{fontSize:10,fill:"var(--text-muted)",fontFamily:"Montserrat"}} axisLine={false} tickLine={false} tickFormatter={v=>`R$ ${fmtNum(v/1000, 0)} mil`}/>
             <YAxis type="category" dataKey="name" tick={{fontSize:11,fill:"var(--text-muted)",fontFamily:"Montserrat"}} axisLine={false} tickLine={false} width={110}/>
             <Tooltip formatter={v=>fmt(v)} contentStyle={{background:"var(--card)",border:"1px solid var(--border)",borderRadius:8,fontSize:11,fontFamily:"Montserrat"}}/>
             <Bar dataKey="value" radius={[0,4,4,0]}>
