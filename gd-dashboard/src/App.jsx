@@ -758,7 +758,7 @@ export default function App() {
         <div className="economia-mid">
           <div className="economia-label">de economia na fatura do cliente</div>
           <div className="economia-subs">
-            <span>Tarifa média {grupo}: <strong>{fmtN(r.tar_media_c_trib,6)} R$/kWh</strong>
+            <span>Tarifa distribuidora {grupo}: <strong>{fmtN(r.tar_media_c_trib,6)} R$/kWh</strong>
               {!grupoB && (
                 <span className="economia-conta">
                   {" "}= ({fmtK(cP)} kWh × {fmtN(r.tar_total_p_trib,6)} + {fmtK(cFP)} kWh × {fmtN(r.tar_total_fp_trib,6)}) ÷ {fmtK(cTot)} kWh
@@ -766,7 +766,7 @@ export default function App() {
               )}
             </span>
             <span>Com GD ({desconto}% desc.): <strong>{fmtN(r.tar_desconto_c_trib,6)} R$/kWh</strong></span>
-            <span>Fator ajuste ponta: <strong>{fmtN(r.fator_geracao,4)}×</strong></span>
+            {!grupoB && <span>Fator ajuste ponta: <strong>{fmtN(r.fator_geracao,4)}×</strong></span>}
           </div>
         </div>
         <div className="economia-anual-box">
